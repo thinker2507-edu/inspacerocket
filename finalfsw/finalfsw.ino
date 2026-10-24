@@ -113,9 +113,10 @@ static_assert(PWM4==PWM4_SERVO.pin && PWM5==PWM5_SERVO.pin,"Servo mapping change
 // Flight logic (thresholds are starting values - tune with real flight data)
 #define LOOP_PERIOD_MS       20          // 50 Hz
 #define BOOT_CAL_MS          3000
-#define LAUNCH_ACCEL_G       2.5f
-#define LAUNCH_SAMPLES       5
-#define LAUNCH_MIN_ALT_M     3.0f
+#include "LaunchConfig.h"
+#include "UnusedPins.h"
+#include "ManualRadioSwitch.h"
+ManualRadioSwitch radioSwitch;
 #define BURNOUT_VEL_DROP_MPS 3.0f
 #define BURNOUT_SAMPLES      5
 #define APOGEE_DROP_M        1.5f
@@ -165,16 +166,6 @@ InaMonitor ina219;
 FlashHardware flashHardware;
 FlightJournal<FlashHardware> journal(flashHardware);
 SdFlightLog sdLog;
-struct TeensyServoOutput {
-  void low(uint8_t pin){digitalWrite(pin,LOW);pinMode(pin,OUTPUT);}
-  void pulse(const ServoConfig& config,uint16_t us){
-    // These two FlexPWM submodules are unused by other project peripherals.
-    // Resolution is global; the project has no other analogWrite consumers.
-    analogWriteResolution(16);
-    analogWriteFrequency(config.pin,config.frameHz);
-    analogWrite(config.pin,config.duty(us));
-  }
-};
 TeensyServoOutput servoOutput;
 ServoControl<TeensyServoOutput> servos(servoOutput,PWM4_SERVO,PWM5_SERVO);
 ServoRadioCommand servoRadio;
@@ -219,7 +210,13 @@ bool beginCalibrationWrite(FlightCalibration value,bool fromCommand,uint32_t now
 void serviceCalibrationStorage(uint32_t now);
 
 // PAD is the startup state; explicit arming and committed storage gate launch detection.
-enum FlightState { ST_PAD = 0, ST_ASCENT, ST_COAST, ST_APOGEE, ST_DESCENT, ST_LANDED };
+// Fixed numeric IDs shared by telemetry, journal recovery and the GCS.
+// Keep names in decision logic instead of scattering literal numbers.
+enum FlightState { ST_PAD = 0, ST_ASCENT = 1, ST_COAST = 2,
+                   ST_APOGEE = 3, ST_DESCENT = 4, ST_LANDED = 5 };
+static_assert(ST_PAD==0 && ST_ASCENT==1 && ST_COAST==2 &&
+              ST_APOGEE==3 && ST_DESCENT==4 && ST_LANDED==5,
+              "Flight-state IDs must remain compatible with telemetry and storage");
 const char* stateName[] = { "PAD", "POWERED_ASCENT", "COAST", "APOGEE",
                             "PARACHUTE_DESCENT", "LANDED" };
 FlightState state = ST_PAD;
@@ -288,7 +285,8 @@ uint32_t rxFrameSince=0,rxFrameWaitMs=0,bootAN=0;
 char     txBuf[220];
 
 // Uplink / command handling
-bool     telemetryOn = true;
+bool     telemetryOn = false; // fresh PAD boot waits for authenticated TELEM,1
+bool     telemetrySessionStarted = false; // no unsolicited SYS before first ON
 uint32_t telemetryPeriodMs = TELEMETRY_PERIOD_MS;
 bool     camRecording = false; // last recording request only; no camera state feedback
 LandingStopTimer cameraLanding;
@@ -1098,6 +1096,9 @@ void runCalibration(uint32_t now, bool gotBaro) {
 // ---------------- Command execution ----------------
 const char* executeCommand(const char* name, const char* arg, char* info, size_t infoLen,
                            uint32_t seq, uint32_t now) {
+  if(radioSwitch.pending && strcmp(name,"STATUS") && strcmp(name,"PING")){
+    snprintf(info,infoLen,"RADIO_SWITCH_PENDING");return "REJECT";
+  }
   if(rebootPending && strcmp(name,"STATUS") && strcmp(name,"PING") && strcmp(name,"REBOOT")){
     snprintf(info,infoLen,"REBOOT_PENDING");return "REJECT";
   }
@@ -1118,6 +1119,9 @@ const char* executeCommand(const char* name, const char* arg, char* info, size_t
   }
 
   if (!strcmp(name, "STATUS")) {
+    if(!strcmp(arg,"RADIO")){
+      snprintf(info,infoLen,"RADIO_CHANNEL=%s;MHZ=%.2f;SF=%u;SYNC=0x%02X;PENDING=%u",radioChannelName(radioSwitch.current),radioChannelMHz(radioSwitch.current),LORA_SF,LORA_SYNC_WORD,radioSwitch.pending);return "OK";
+    }
     if(!strcmp(arg,"SERVO")){servos.status(info,infoLen);return "OK";}
     if(!strcmp(arg,"LINK")){
       snprintf(info,infoLen,"LINK=USB_AND_LORA;RADIO=%u;RX=%u;TX_BUSY=%u;BUILD=USB_CMD_2;SERVO=ACK_FIRST_1",radioReady,radioListening,txBusy);
@@ -1246,6 +1250,15 @@ const char* executeCommand(const char* name, const char* arg, char* info, size_t
     return "OK";
   }
 
+  if(!strcmp(name,"RADIO")){
+    RadioChannel channel=radioChannel(arg);
+    if(channel==RadioChannel::INVALID){snprintf(info,infoLen,"ARG_MAIN_OR_BACKUP");return "ERR";}
+    if(!radioReady){snprintf(info,infoLen,"RADIO_UNAVAILABLE");return "ERR";}
+    if(txBusy || ackPending){snprintf(info,infoLen,"RADIO_BUSY");return "REJECT";}
+    if(channel==radioSwitch.current){snprintf(info,infoLen,"RADIO_CHANNEL=%s;MHZ=%.2f",radioChannelName(channel),radioChannelMHz(channel));return "OK";}
+    radioSwitch.queue(channel,seq,commandFromUsb,now);
+    snprintf(info,infoLen,"RADIO_SWITCH_PENDING=%s",radioChannelName(channel));return "OK";
+  }
   if (!strcmp(name, "CAL")) {
     uint8_t mask = 0;
     if (!strcmp(arg, "BARO")) mask = CAL_BARO;
@@ -1548,6 +1561,31 @@ void serviceCommandReplies(){
   }
 }
 
+void serviceRadioSwitch(uint32_t now){
+  if(!radioSwitch.ready(now,txBusy || ackPending))return;
+  const uint32_t sequence=radioSwitch.sequence;
+  const bool usb=radioSwitch.fromUsb;
+  const RadioChannel previous=radioSwitch.current;
+  bool ok=!radioSwitch.ackFailed && uint32_t(now-radioSwitch.queuedMs)<=5000;
+  int16_t rc=-1;
+  if(ok){
+    rc=radio.standby();radioListening=false;rxFrameActive=false;
+    if(rc==RADIOLIB_ERR_NONE)rc=radio.setFrequency(radioChannelMHz(radioSwitch.target));
+    ok=rc==RADIOLIB_ERR_NONE;
+    if(ok){radioSwitch.current=radioSwitch.target;rc=radio.startReceive();radioListening=rc==RADIOLIB_ERR_NONE;ok=radioListening;}
+    if(!ok){radio.setFrequency(radioChannelMHz(previous));radioSwitch.current=previous;radioListen();}
+  }
+  radioSwitch.pending=false;
+  char info[128];
+  if(ok)snprintf(info,sizeof(info),"RADIO_CHANNEL=%s;MHZ=%.2f;SF=%u;SYNC=0x%02X",radioChannelName(radioSwitch.current),radioChannelMHz(radioSwitch.current),LORA_SF,LORA_SYNC_WORD);
+  else snprintf(info,sizeof(info),"RADIO_SWITCH_FAILED;MHZ=%.2f;RC=%d;LINK=UNKNOWN",radioChannelMHz(radioSwitch.current),rc);
+  const char* status=ok?"DONE":"FAIL";
+  queueAck(sequence,status,info,usb);
+  if(haveCmdSeq && lastCmdSeq==sequence){
+    snprintf(lastStatus,sizeof(lastStatus),"%s",status);snprintf(lastInfo,sizeof(lastInfo),"%s",info);
+  }
+}
+
 void sendSystemStatus(uint32_t now){
     char elapsed[24],body[190];
     if(mission.quality==TIME_UNCERTAIN)snprintf(elapsed,sizeof(elapsed),"NA");
@@ -1565,9 +1603,10 @@ void sendSystemStatus(uint32_t now){
 
 void handleLoRa(uint32_t now) {
   serviceCommandReplies();
+  if(telemetryOn)telemetrySessionStarted=true; // also preserves in-flight recovery policy
   if(!radioReady){
     if(rebootPending)return;
-    if(uint32_t(now-lastSystemMs)>=5000){lastSystemMs=now;sendSystemStatus(now);return;}
+    if(telemetrySessionStarted && uint32_t(now-lastSystemMs)>=5000){lastSystemMs=now;sendSystemStatus(now);return;}
     if(routineTelemetryDue(telemetryOn,now,lastTelemetryMs,telemetryPeriodMs)){
       lastTelemetryMs=now;sendTelemetry(now);
     }
@@ -1599,6 +1638,7 @@ void handleLoRa(uint32_t now) {
     if ((int32_t)(now - ackDueMs) >= 0) {
       bool started=startTx(ackBuf, ackLen, now);
       servoRadio.ackStarted(radioAckSequence,started);
+      radioSwitch.acceptanceTx(radioAckSequence,started);
       if (started) { Serial.print("# "); Serial.println(ackBuf); }
       ackPending = false;
     }
@@ -1606,11 +1646,12 @@ void handleLoRa(uint32_t now) {
   }
 
   if(rebootPending)return; // ACK was serviced above; no new routine TX during shutdown
+  if(radioSwitch.pending)return; // preserve a quiet acceptance-to-retune window
   if(uint32_t(now-lastTxFinishedMs)<250)return;
 
   // Keep a command receive window before the extra diagnostic downlink. In a
   // busy link this occasionally defers a telemetry slot, never changes its layout.
-  bool systemDue=uint32_t(now-lastSystemMs)>=5000;
+  bool systemDue=telemetrySessionStarted && uint32_t(now-lastSystemMs)>=5000;
   bool sensorDue=routineTelemetryDue(telemetryOn,now,lastTelemetryMs,telemetryPeriodMs);
   if((systemDue || sensorDue) && !coexistence.ready(now))return;
   if(!systemDue && routineTelemetryDue(telemetryOn,now,lastTelemetryMs,telemetryPeriodMs)) {
@@ -1797,6 +1838,7 @@ void loop() {
   serviceUsbConsole(now);
   handleLoRa(now);
   serviceWirelessServo();
+  serviceRadioSwitch(now);
   readGPS();
   readIMU();
   now = millis();

@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SEDS BPHC GCS TEAM 023</title>
+  <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;800&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --panel:    #131a24;
+      --panel2:   #1a2332;
+      --border:   #2a3f5f;
+      --border2:  #1e3050;
+      --accent:   #00e5ff;
+      --accent2:  #ff6b35;
+      --green:    #39ff14;
+      --red:      #ff3a3a;
+      --yellow:   #ffd700;
+      --text:     #c9d8ec;
+      --text-dim: #5a7a9a;
+      --header-h: 64px;
+      --gap:      8px;
+    }
+    body.light-mode {
+      --bg:#f5f7fa; --panel:#ffffff; --panel2:#e9edf3;
+      --border:#bfc8d6; --border2:#d5dce6;
+      --accent:#0078ff; --accent2:#ff6b35;
+      --green:#00aa44; --red:#d93025; --yellow:#c49000;
+      --text:#111827; --text-dim:#6b7280;
+    }
+    body.light-mode #team-logo img { filter: none; }
+    *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+    body {
+      background:var(--bg); color:var(--text);
+      font-family:'Exo 2',sans-serif; font-size:13px;
+      height:100vh; overflow:hidden;
+      display:flex; flex-direction:column;
+    }
+    body::after {
+      content:''; pointer-events:none;
+      position:fixed; inset:0;
+      background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,.013) 2px,rgba(0,229,255,.013) 4px);
+      z-index:9999;
+    }
+    header {
+      height:var(--header-h); background:var(--panel);
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center;
+      padding:0 12px; gap:10px; flex-shrink:0;
+    }
+    .logo-zone { display:flex; align-items:center; gap:10px; min-width:220px; }
+    #team-logo {
+      width:60px; height:60px; display:flex; align-items:center;
+      justify-content:center; cursor:pointer; overflow:hidden; flex-shrink:0;
+    }
+    #team-logo img { width:100%; height:100%; object-fit:contain; filter:brightness(0) invert(1); transition:filter .3s; }
+    .brand-name { font-family:'Orbitron',monospace; font-weight:800; font-size:16px; color:var(--accent); letter-spacing:2px; }
+    .brand-sub  { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text-dim); letter-spacing:1px; }
+    .divider-v  { width:1px; height:40px; background:var(--border); margin:0 4px; flex-shrink:0; }
+    .ctrl-btn {
+      width:36px; height:36px; border-radius:50%;
+      border:2px solid var(--border); background:var(--panel2);
+      color:var(--text-dim); cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:all .2s; font-size:14px;
+    }
+    .ctrl-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .ctrl-btn.active { border-color:var(--green); color:var(--green); box-shadow:0 0 8px rgba(57,255,20,.4); }
+    #sim-badge {
+      padding:4px 10px; border:2px solid var(--red); border-radius:4px;
+      font-family:'Orbitron',monospace; font-size:10px; font-weight:600;
+      color:var(--red); cursor:pointer; transition:all .2s; letter-spacing:2px;
+    }
+    #sim-badge.active { background:var(--red); color:#fff; box-shadow:0 0 12px rgba(255,58,58,.5); }
+    #sim-reset-btn {
+      padding:3px 8px; background:transparent; border:1px solid var(--yellow);
+      color:var(--yellow); border-radius:4px; cursor:pointer;
+      font-family:'Orbitron',monospace; font-size:8px; font-weight:600;
+      letter-spacing:1px; transition:all .2s;
+    }
+    #sim-reset-btn:hover { background:rgba(255,215,0,.1); }
+    .phases { display:flex; gap:18px; margin-left:auto; }
+    .phase { display:flex; flex-direction:column; align-items:center; gap:4px;
+             font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text-dim); letter-spacing:1px; }
+    .phase-dot { width:14px; height:14px; border-radius:50%; background:#222; border:2px solid #333; transition:all .3s; }
+    .phase-dot.active { background:var(--green); border-color:var(--green); box-shadow:0 0 10px rgba(57,255,20,.7); }
+    .phase-dot.past   { background:var(--text-dim); border-color:var(--text-dim); }
+    #connect-btn {
+      padding:6px 14px; background:transparent; border:1px solid var(--accent);
+      color:var(--accent); font-family:'Share Tech Mono',monospace;
+      font-size:11px; border-radius:4px; cursor:pointer;
+      letter-spacing:1px; transition:all .2s; white-space:nowrap;
+    }
+    #connect-btn:hover { background:rgba(0,229,255,.1); }
+    #connect-btn.connected { border-color:var(--green); color:var(--green); background:rgba(57,255,20,.08); }
+    .main {
+      flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,1fr) 420px;
+      gap:var(--gap); padding:var(--gap); overflow:hidden;
+    }
+    .chart-area { display:grid; grid-template-rows:repeat(3,1fr); gap:var(--gap); overflow:hidden; min-height:0; }
+    .chart-row  { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--gap); height:100%; min-height:0; }
+    .chart-card {
+      background:var(--panel); border:1px solid var(--border2);
+      border-radius:6px; display:flex; flex-direction:column;
+      overflow:hidden; position:relative; height:100%; min-height:0;
+    }
+    .chart-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:2px;
+      background:linear-gradient(90deg,var(--accent),transparent); opacity:.4;
+    }
+    .chart-title { font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--text-dim); letter-spacing:1.5px; padding:5px 8px 0; text-transform:uppercase; }
+    .chart-val   { font-family:'Orbitron',monospace; font-size:13px; font-weight:600; color:var(--accent); padding:0 8px; min-height:18px; }
+    .chart-plot  { flex:1; min-height:60px; position:relative; }
+    .axis-legend { display:flex; gap:8px; padding:3px 8px 4px; }
+    .axis-item   { display:flex; align-items:center; gap:4px; font-size:9px; font-family:'Share Tech Mono',monospace; color:var(--text-dim); }
+    .axis-dot    { width:7px; height:7px; border-radius:50%; }
+    .right-panel { display:grid; grid-template-rows:minmax(240px,1fr) auto auto auto; gap:var(--gap); overflow-y:auto; min-height:0; min-width:0; }
+    .map-card    { background:var(--panel); border:1px solid var(--border2); border-radius:6px; overflow:hidden; position:relative; min-height:240px; }
+    #map         { width:100%; height:100%; }
+    .telemetry-bar {
+      background:var(--panel); border:1px solid var(--border2); border-radius:6px;
+      display:grid; grid-template-columns:repeat(5,1fr); padding:8px; gap:4px;
+    }
+    .telem-item  { display:flex; flex-direction:column; gap:2px; }
+    .telem-label { font-size:9px; font-family:'Share Tech Mono',monospace; color:var(--text-dim); letter-spacing:1px; }
+    .telem-val   { font-family:'Orbitron',monospace; font-size:13px; font-weight:600; color:var(--text); }
+    #packets-val .p-rx { color:var(--green); }
+    #packets-val .p-tx { color:var(--text); }
+    #packets-val .p-err { color:var(--red); }
+    .cmd-card { background:var(--panel); border:1px solid var(--border2); border-radius:6px; display:flex; flex-direction:column; overflow:hidden; }
+    .cmd-header { font-family:'Orbitron',monospace; font-size:11px; font-weight:600; padding:7px 10px; border-bottom:1px solid var(--border2); color:var(--accent); letter-spacing:2px; }
+    #cmd-log { flex:1; padding:6px 10px; font-family:'Share Tech Mono',monospace; font-size:10px; overflow-y:auto; min-height:60px; max-height:80px; color:var(--text-dim); }
+    #cmd-log .cmd-line  { color:var(--green); }
+    #cmd-log .resp-line { color:var(--text-dim); }
+    #cmd-log .err-line  { color:var(--red); }
+    .cmd-input-row { display:flex; align-items:center; border-top:1px solid var(--border2); padding:0 8px; gap:6px; }
+    .cmd-prompt-sym { font-family:'Share Tech Mono',monospace; color:var(--green); font-size:12px; }
+    #cmd-input { flex:1; background:transparent; border:none; outline:none; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--text); padding:6px 0; }
+    .controls-panel { display:flex; flex-direction:column; gap:4px; }
+    .ctrl-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; }
+    .controls-panel [role="status"] { font-size:10px !important; line-height:1.2; padding:1px 3px !important; overflow-wrap:anywhere; }
+    #mission-status { display:none; }
+    #vehicle-status, #telemetry-status, #command-status { grid-column:auto !important; }
+    @media(max-width:900px) {
+      body { height:auto; min-height:100vh; overflow:auto; }
+      header { height:auto; min-height:var(--header-h); flex-wrap:wrap; padding:6px; }
+      .phases { gap:10px; flex-wrap:wrap; }
+      .main { flex:none; grid-template-columns:minmax(0,1fr); overflow:visible; }
+      .chart-area { min-height:600px; }
+      .right-panel { grid-template-rows:300px auto auto auto; overflow:visible; }
+      .status-bar { flex-wrap:wrap; gap:8px; }
+    }
+    .ctrl-action {
+      background:var(--panel2); border:1px solid var(--border); border-radius:4px;
+      padding:5px 4px; display:flex; align-items:center; justify-content:center; gap:4px;
+      cursor:pointer; font-family:'Share Tech Mono',monospace; font-size:10px;
+      color:var(--text); transition:all .15s; white-space:nowrap;
+    }
+    .ctrl-action:hover { border-color:var(--accent); color:var(--accent); background:rgba(0,229,255,.06); }
+    .ctrl-action:disabled { opacity:.45; cursor:not-allowed; }
+    .ctrl-action.active { border-color:var(--green); color:var(--green); background:rgba(57,255,20,.12); }
+    .ctrl-action .btn-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:var(--red); box-shadow:0 0 4px rgba(255,58,58,.5); }
+    .ctrl-action .btn-dot.green { background:var(--green); box-shadow:0 0 4px rgba(57,255,20,.5); }
+    .ctrl-action .btn-dot.off   { background:var(--text-dim); box-shadow:none; }
+    /* Recording indicator */
+    .btn-dot.recording { background:var(--red); box-shadow:0 0 6px rgba(255,58,58,.8); animation:pulse-rec 1s ease-in-out infinite; }
+    @keyframes pulse-rec { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+    .status-bar { background:var(--panel); border-top:1px solid var(--border2); padding:3px 10px; font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text-dim); display:flex; gap:20px; flex-shrink:0; align-items:center; }
+    .status-bar .s-dot { width:6px; height:6px; border-radius:50%; background:var(--text-dim); }
+    .status-bar .s-dot.ok { background:var(--green); box-shadow:0 0 4px rgba(57,255,20,.5); }
+    .status-bar .s-dot.recording { background:var(--red); box-shadow:0 0 4px rgba(255,58,58,.5); animation:pulse-rec 1s ease-in-out infinite; }
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+    #toast { position:fixed; bottom:30px; right:20px; background:var(--panel2); border:1px solid var(--accent); border-radius:6px; padding:8px 16px; font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--accent); opacity:0; transition:opacity .3s; z-index:10000; pointer-events:none; }
+    #toast.show { opacity:1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-zone">
+    <div id="team-logo">
+      <img src="seds.png" onerror="this.style.display='none';this.parentNode.innerHTML='<div style=\'font-family:Orbitron,monospace;font-size:11px;color:var(--accent);font-weight:800;\'>SEDS</div>'"/>
+    </div>
+    <div>
+      <div class="brand-name">SEDS BPHC</div>
+      <div class="brand-sub">ROCKET|CANSAT TEAM 023</div>
+    </div>
+  </div>
+
+  <div class="divider-v"></div>
+  <button class="ctrl-btn" id="theme-btn" title="Theme" onclick="toggleTheme()">◑</button>
+  <div class="divider-v"></div>
+
+  <div style="display:flex;flex-direction:column;gap:4px;">
+    <div id="sim-badge" onclick="toggleSim()">SIMULATION</div>
+    <button id="sim-reset-btn" onclick="resetSimulation()">RESET SIM</button>
+  </div>
+
+  <div class="divider-v"></div>
+  <button id="connect-btn" onclick="connectSerial()">CONNECT SERIAL</button>
+
+  <div class="phases">
+    <div class="phase"><div class="phase-dot" id="ph-launchpad"></div>PAD</div>
+    <div class="phase"><div class="phase-dot" id="ph-ascent"></div>POWERED ASCENT</div>
+    <div class="phase"><div class="phase-dot" id="ph-coast"></div>COAST</div>
+    <div class="phase"><div class="phase-dot" id="ph-apogee"></div>APOGEE</div>
+    <div class="phase"><div class="phase-dot" id="ph-descent"></div>DESCENT</div>
+    <div class="phase"><div class="phase-dot" id="ph-landed"></div>LANDED</div>
+  </div>
+</header>
+
+<div class="main">
+  <div class="chart-area">
+    <div class="chart-row">
+      <div class="chart-card">
+        <div class="chart-title">Temperature (°C)</div>
+        <div class="chart-val"><span id="val-temp">—</span> <span id="val-ctemp" style="color:#ff4fa3"></span></div>
+        <div class="chart-plot" id="plot-temp"></div>
+        <div class="axis-legend">
+          <div class="axis-item"><div class="axis-dot" style="background:#ff6b35"></div>ROCKET</div>
+          <div class="axis-item"><div class="axis-dot" style="background:#ff4fa3"></div>CANSAT</div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Altitude / GPS Alt (M)</div>
+        <div class="chart-val"><span id="val-alt">—</span> <span id="val-calt" style="color:#39ff14"></span></div>
+        <div class="chart-plot" id="plot-alt"></div>
+        <div class="axis-legend">
+          <div class="axis-item"><div class="axis-dot" style="background:#00e5ff"></div>BARO ALT</div>
+          <div class="axis-item"><div class="axis-dot" style="background:#bf80ff"></div>GPS ALT</div>
+          <div class="axis-item"><div class="axis-dot" style="background:#39ff14"></div>CANSAT ALT</div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Pressure (Pa)</div>
+        <div class="chart-val"><span id="val-pres">—</span> <span id="val-cpres" style="color:#4da3ff"></span></div>
+        <div class="chart-plot" id="plot-pres"></div>
+        <div class="axis-legend">
+          <div class="axis-item"><div class="axis-dot" style="background:#ffd700"></div>ROCKET</div>
+          <div class="axis-item"><div class="axis-dot" style="background:#4da3ff"></div>CANSAT</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card">
+        <div class="chart-title">Voltage (V)</div>
+        <div class="chart-val"><span id="val-volt">—</span> <span id="val-cvolt" style="color:#1de9b6"></span></div>
+        <div class="chart-plot" id="plot-volt"></div>
+        <div class="axis-legend">
+        <div class="axis-item"><div class="axis-dot" style="background:#ff3a3a"></div>ROCKET</div>
+        <div class="axis-item"><div class="axis-dot" style="background:#1de9b6"></div>CANSAT</div>
+      </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Gyroscope (DPS)</div>
+        <div class="chart-val" id="val-gyro">—</div>
+        <div class="chart-plot" id="plot-gyro"></div>
+        <div class="axis-legend">
+          <div class="axis-item"><div class="axis-dot" style="background:#ff3a3a"></div>X-AXIS</div>
+          <div class="axis-item"><div class="axis-dot" style="background:#39ff14"></div>Y-AXIS</div>
+          <div class="axis-item"><div class="axis-dot" style="background:#bf80ff"></div>Z-AXIS</div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Accelerometer (M/S²)</div>
+        <div class="chart-val" id="val-accel">—</div>
+        <div class="chart-plot" id="plot-accel"></div>
+        <div class="axis-legend">
+          <div class="axis-item"><div class="axis-dot" style="background:#ff3a3a"></div>X-AXIS</div>
+          <div class="axis-item"><div class="axis-dot" style="background:#39ff14"></div>Y-AXIS</div>
+          <div class="axis-item"><div class="axis-dot" style="background:#bf80ff"></div>Z-AXIS</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-card">
+          <div class="chart-title">CanSat Gyroscope (DPS)</div>
+          <div class="chart-val" id="val-cgyro">—</div>
+          <div class="chart-plot" id="plot-cgyro"></div>
+          <div class="axis-legend">
+            <div class="axis-item"><div class="axis-dot" style="background:#ff3a3a"></div>X-AXIS</div>
+            <div class="axis-item"><div class="axis-dot" style="background:#39ff14"></div>Y-AXIS</div>
+            <div class="axis-item"><div class="axis-dot" style="background:#bf80ff"></div>Z-AXIS</div>
+          </div>
+        </div>
+      <div class="chart-card">
+        <div class="chart-title">Aerosol vs Altitude</div>
+        <div class="chart-val" id="val-aero-alt" style="font-size:10px;">—</div>
+        <div class="chart-plot" id="plot-aero-alt"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">CanSat Accelerometer (M/S²)</div>
+        <div class="chart-val" id="val-caccel">—</div>
+        <div class="chart-plot" id="plot-caccel"></div>
+        <div class="axis-legend"> 
+            <div class="axis-item"><div class="axis-dot" style="background:#ff3a3a"></div>X-AXIS</div>
+            <div class="axis-item"><div class="axis-dot" style="background:#39ff14"></div>Y-AXIS</div>
+            <div class="axis-item"><div class="axis-dot" style="background:#bf80ff"></div>Z-AXIS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="map-card"><div id="map"></div></div>
+
+    <div class="telemetry-bar">
+      <div class="telem-item">
+        <div class="telem-label" title="Elapsed GCS time since the first accepted rocket telemetry packet">MISSION TIME</div>
+        <div class="telem-val" id="mission-time" title="Starts on the first telemetry packet; independent of onboard launch time">00:00:00</div>
+        <div id="mission-status" hidden></div>
+      </div>
+      <div class="telem-item">
+        <div class="telem-label">PACKETS</div>
+        <div class="telem-val" id="packets-val">
+          <span class="p-rx">0</span> / <span class="p-tx">0</span> / <span class="p-err">0</span>
+        </div>
+      </div>
+      <div class="telem-item">
+        <div class="telem-label">LATITUDE</div>
+        <div class="telem-val" id="t-lat">00.00</div>
+      </div>
+      <div class="telem-item">
+        <div class="telem-label">LONGITUDE</div>
+        <div class="telem-val" id="t-lon">00.00</div>
+      </div>
+      <div class="telem-item">
+        <div class="telem-label">ALTITUDE</div>
+        <div class="telem-val" id="t-galt">00.00</div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-header">SERIAL WRITE</div>
+      <div id="cmd-log"></div>
+      <div class="cmd-input-row">
+        <span class="cmd-prompt-sym">&gt;</span>
+        <input id="cmd-input" placeholder="Command, e.g. STATUS or CAL,ALL" autocomplete="off" spellcheck="false" onkeydown="handleCmd(event)"/>
+      </div>
+    </div>
+
+    <div class="controls-panel">
+    <div class="ctrl-grid" aria-label="RunCam controls">
+      <button class="ctrl-action" id="cam-record-start" onclick="sendCameraAction('start')" aria-pressed="false" disabled>Start Recording</button>
+      <button class="ctrl-action" id="cam-record-stop" onclick="sendCameraAction('stop')" aria-pressed="false" disabled>Stop Recording</button>
+      <div id="camera-status" style="grid-column:1/-1;font-size:11px;padding:5px" role="status" aria-live="polite">Camera Status: UNKNOWN</div>
+    </div>
+
+    <div class="ctrl-grid">
+      <button class="ctrl-action" id="btn-telemetry" onclick="toggleTelemetry()">
+        <div class="btn-dot" id="dot-telemetry"></div>Telemetry UNKNOWN
+      </button>
+      <div id="vehicle-status" style="grid-column:1/-1;font-size:11px" role="status">ROCKET: waiting | CANSAT: waiting | Commands: ROCKET</div>
+      <div id="telemetry-status" style="grid-column:1/-1;font-size:11px" role="status">Firmware telemetry UNKNOWN; awaiting STATUS.</div>
+      <button class="ctrl-action" id="btn-calibrate" onclick="calibrateSensors()">
+        <div class="btn-dot off"></div>Calibrate
+      </button>
+      <button class="ctrl-action" id="btn-set-time" onclick="setTime()">
+        <div class="btn-dot off"></div>Set Time
+      </button>
+      <button class="ctrl-action" id="btn-reset-pad" onclick="resetPadMission()">
+        <div class="btn-dot off"></div>Reset to PAD
+      </button>
+      <button class="ctrl-action" id="btn-arm" onclick="armMission()">Arm Mission</button>
+      <div id="command-status" style="grid-column:1/-1;font-size:11px" role="status">No command pending</div>
+      <!-- Download CSV now triggers save of live-recorded data -->
+      <button class="ctrl-action" id="btn-download-csv" onclick="downloadCSV()">
+        <div class="btn-dot" id="dot-csv-rec"></div>⬇ Download CSV
+      </button>
+      <button class="ctrl-action" onclick="document.getElementById('csv-upload').click()">
+        <div class="btn-dot off"></div>⬆ Upload CSV
+        <input type="file" id="csv-upload" accept=".csv" style="display:none" onchange="uploadCSV(event)"/>
+      </button>
+    </div>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <span style="display:flex;align-items:center;gap:4px;"><div class="s-dot" id="serial-dot"></div>SERIAL: <span id="serial-status">DISCONNECTED</span></span>
+  <!-- NEW: live CSV recording indicator -->
+  <span style="display:flex;align-items:center;gap:4px;"><div class="s-dot" id="csv-rec-dot"></div>CSV REC: <span id="csv-rec-status">IDLE</span> · <span id="csv-rec-count">0 rows</span></span>
+  <span>FILE: <span id="csv-filename">—</span></span>
+  <span>BAUD: <span id="baud-status">—</span></span>
+  <span style="margin-left:auto">SEDS BPHC GCS TEAM 023</span>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════════════════ */
+const VEHICLE = Object.freeze({ID:'R',NAME:'ROCKET',SOURCE:1,ADDRESS:'23:R'});
+let lastVehiclePacket=0, lastCounterEpoch=0;
+const cansatLink={lastPacket:0,epoch:0,rx:0,synthetic:false};
+const receivedLinks={'23:R':null,'23:C':null};
+const CONFIG = { BAUD_RATE: 115200, MAX_POINTS: 300 };
+
+// Existing flight command framing, shared by camera and noncamera controls. No retries.
+const CAMERA_CONFIG = { TEAM: 23, KEY: 4821, ACK_TIMEOUT_MS: 10000 };
+let cameraPending = null;
+let cameraSelection = ''; // user selection only: never reset by ACKs, telemetry or timeouts
+let cameraRequestState = 'UNKNOWN';
+let cameraSerialReady = false;
+let cameraSequence = crypto.getRandomValues(new Uint32Array(1))[0];
+
+function cameraChecksum(body) {
+  let cs = 0;
+  for (const c of body) cs ^= c.charCodeAt(0);
+  return cs.toString(16).toUpperCase().padStart(2, '0');
+}
+
+function cameraFrame(name, arg, seq) {
+  const body = `CMD,${CAMERA_CONFIG.TEAM}:${VEHICLE.ID},${CAMERA_CONFIG.KEY},${seq},${name}` + (arg == null ? '' : ',' + arg);
+  return '$' + body + '*' + cameraChecksum(body);
+}
+
+async function sendReceiverRadioCommand(arg){
+  if(!['MAIN','BACKUP','STATUS'].includes(arg)){
+    logCmd('Use GROUND MAIN, GROUND BACKUP or GROUND STATUS.','err');return false;
+  }
+  if(!cameraSerialReady || !serialPort || !serialPort.writable || simActive || cameraPending){
+    logCmd('Receiver command blocked: connect serial, stop simulation, wait for pending command.','err');return false;
+  }
+  document.getElementById('command-status').textContent='Receiver-only request; flight channel/link unconfirmed.';
+  return sendCmd('@RADIO '+arg); // local bridge command, never a broadcast LoRa command
+}
+function sendConsoleCommand(text) {
+  text=text.trim();
+  if(text.startsWith('$')) {
+    const m=/^\$(CMD,(\d+:[RC]),(\d+),(\d+),([A-Z][A-Z0-9_]*)(?:,([^,*$\r\n]+))?)\*([0-9A-Fa-f]{2})$/.exec(text);
+    if(!m || cameraChecksum(m[1])!==m[7].toUpperCase() || m[2]!==VEHICLE.ADDRESS ||
+       Number(m[3])!==CAMERA_CONFIG.KEY || Number(m[4])>0xFFFFFFFF){
+      logCmd('Invalid command envelope/team/key/checksum; nothing sent.','err');return false;
+    }
+    return sendFlightCommand(m[5],m[6],null,null,Number(m[4]));
+  }
+  const m=/^([A-Za-z][A-Za-z0-9_]*)(?:(?:\s*,\s*|\s+)([^\s,*$]+))?$/.exec(text);
+  if(!m){logCmd('Use NAME,arg or NAME arg; only one argument.','err');return false;}
+  let name=m[1].toUpperCase(),arg=m[2]==null?undefined:m[2].toUpperCase();
+  if(name==='TELEM' && (arg==='ON' || arg==='OFF'))arg=arg==='ON'?'1':'0';
+  if(name==='COUNT' && arg==null){name='STATUS';arg='COUNTER';}
+  if(name==='GROUND')return sendReceiverRadioCommand(arg);
+  if(name==='RESETCOUNT'){logCmd('RESETCOUNT CONFIRM is available only on the flight board USB Serial Monitor.','err');return false;}
+  return sendFlightCommand(name,arg);
+}
+
+function cameraStatus(message) {
+  document.getElementById('camera-status').textContent =
+    `Camera Status: ${cameraRequestState} — ${message} Physical recording: UNKNOWN (0x01 toggle test).`;
+}
+
+function updateCameraControls() {
+  renderTelemetryStatus();
+  const ready = cameraSerialReady && !!(serialPort && serialPort.writable) && !simActive && !cameraPending;
+  for (const action of ['start', 'stop']) {
+    const button = document.getElementById('cam-record-' + action);
+    button.disabled = !ready;
+    button.classList.toggle('active', cameraSelection === action);
+    button.setAttribute('aria-pressed', String(cameraSelection === action));
+  }
+  for(const id of ['btn-telemetry','btn-calibrate','btn-set-time','btn-arm','btn-reset-pad'])
+    document.getElementById(id).disabled=id==='btn-telemetry' && simActive?false:
+      !ready || (id==='btn-telemetry' && typeof telemetryOn!=='boolean');
+}
+
+function finishDelivery(pending, message, success = false) {
+  document.getElementById('command-status').textContent=message;
+  if (pending.action) cameraStatus(message);
+  else { logCmd(message, success ? 'resp' : 'err'); toast(message); }
+}
+
+function handleBridgeStatus(raw) {
+  if(!raw.startsWith('#'))return false;
+  logSerial(raw,'resp');
+  if(raw.startsWith('# RADIO')){
+    document.getElementById('command-status').textContent=raw.slice(2)+' (receiver status; flight link not confirmed)';
+    return true;
+  }
+  const tx=/^# UPLINK radio TX start \(not execution\): (-?\d+)$/.exec(raw);
+  if(cameraPending && (/^# (?:UPLINK (?:invalid|partial)|USB (?:rejected|partial|command too long))/.test(raw) || (tx && Number(tx[1])!==0))){
+    const pending=cameraPending;clearTimeout(pending.timer);cameraPending=null;
+    if(pending.name==='TELEM')applyTelemetryState(null);
+    finishDelivery(pending,'FAILED at ground bridge: '+raw+'. Physical execution unconfirmed.');
+    updateCameraControls();
+  }
+  return true;
+}
+
+function cameraConnectionLost() {
+  cameraSerialReady = false;
+  document.getElementById('vehicle-status').textContent='ROCKET / CANSAT: serial disconnected | Commands: ROCKET';
+  applyTelemetryState(null);
+  if (cameraPending) {
+    const pending = cameraPending;
+    clearTimeout(pending.timer); cameraPending = null;
+    finishDelivery(pending, 'FAILED: connection lost; execution unknown. No retry sent.');
+  }
+  updateCameraControls();
+}
+
+async function sendFlightCommand(name, arg, action = null, onSuccess = null, explicitSequence = null) {
+  if(!/^[A-Z][A-Z0-9_]*$/.test(name) || (arg!=null && (!/^[!-~]+$/.test(String(arg)) || /[,*$]/.test(String(arg))))) {
+    document.getElementById('command-status').textContent='Invalid command name/argument; nothing sent.';
+    return false;
+  }
+  if (!cameraSerialReady || !serialPort || !serialPort.writable || simActive || cameraPending) {
+    const message = 'Command blocked: connect serial, stop simulation, and wait for the pending command.';
+    if (action) cameraStatus(message); else { logCmd(message, 'err'); toast(message); }
+    return false;
+  }
+  const seq = cameraSequence = explicitSequence==null?(cameraSequence+1)>>>0:explicitSequence;
+  if(cameraFrame(name,arg,seq).length>99){
+    document.getElementById('command-status').textContent='Command exceeds the 99-byte radio limit; nothing sent.';
+    return false;
+  }
+  const pending = { seq, name, action, onSuccess, timer: null };
+  if(name==='TELEM' && (arg==='1' || arg==='0'))telemetryRequested=arg==='1';
+  cameraPending = pending;
+  finishDelivery(pending, `PENDING: ${name}, sequence ${seq}. Waiting for flight ACK.`, true);
+  updateCameraControls();
+  pending.timer = setTimeout(() => {
+    if (cameraPending !== pending) return;
+    cameraPending = null;
+    if(pending.name==='TELEM')applyTelemetryState(null);
+    finishDelivery(pending, `TIMED OUT: ${name}; execution unknown. No retry sent.`);
+    updateCameraControls();
+  }, CAMERA_CONFIG.ACK_TIMEOUT_MS);
+  const written = await sendCmd(cameraFrame(name, arg, seq));
+  if (!written && cameraPending === pending) {
+    clearTimeout(pending.timer); cameraPending = null;
+    if(name==='TELEM')applyTelemetryState(null);
+    finishDelivery(pending, 'FAILED: serial write; execution unknown. No retry sent.');
+  }
+  updateCameraControls();
+  return written;
+}
+
+async function sendCameraAction(action) {
+  if (action !== 'start' && action !== 'stop') return false;
+  cameraSelection = action;
+  cameraRequestState = action === 'start' ? 'START REQUESTED' : 'STOP REQUESTED';
+  updateCameraControls();
+  return sendFlightCommand('CAM', action === 'start' ? '1' : '0', action);
+}
+
+function handleCameraAck(raw) {
+  if (!raw.startsWith('$ACK')) return false;
+  const match = /^\$(ACK,([0-9]+:[RC]),([0-9]+),(OK|DONE|FAIL|REJECT|ERR),([^,*\r\n]*))\*([0-9A-Fa-f]{2})$/.exec(raw);
+  if (!match || cameraChecksum(match[1]) !== match[6].toUpperCase() ||
+      match[2] !== VEHICLE.ADDRESS || Number(match[3]) > 0xFFFFFFFF) {
+    logCmd('Invalid ACK ignored', 'err'); return true;
+  }
+  noteVehiclePacket('ACK');
+  if (!cameraPending || Number(match[3]) !== cameraPending.seq) {
+    logCmd('Unmatched/late ACK: ' + raw, 'resp'); return true;
+  }
+  const pending = cameraPending;
+  if(pending.name==='RADIO' && match[4]==='OK' && match[5].startsWith('RADIO_SWITCH_PENDING=')){
+    finishDelivery(pending,'Radio switch accepted on old channel; waiting for DONE on the requested frequency. Link unconfirmed.',true);
+    return true;
+  }
+  if((pending.name==='PWM4' || pending.name==='PWM5') && match[4]==='OK' &&
+     match[5].startsWith(pending.name+'_ACCEPTED_US=')){
+    finishDelivery(pending,'Wireless servo command accepted; waiting for commanded-output DONE/FAIL. Physical position UNKNOWN.',true);
+    return true;
+  }
+  if (pending.name === 'CAM' && match[4] === 'OK' && match[5] === 'CAM_PERSISTING') {
+    finishDelivery(pending, 'Accepted; persisting intent before UART transmission. Physical state UNKNOWN.', true);
+    return true;
+  }
+  if(pending.name==='RESETPAD' && match[4]==='OK'){
+    finishDelivery(pending, 'PAD reset accepted; waiting for durable DONE/FAIL.', true);
+    return true;
+  }
+  if (pending.name === 'CAL' && match[4] === 'OK') {
+    finishDelivery(pending, 'Calibration accepted; waiting for DONE/FAIL.', true);
+    return true;
+  }
+  clearTimeout(pending.timer); cameraPending = null;
+  const success = match[4] === 'OK' || match[4] === 'DONE';
+  const label = {OK:'ACKNOWLEDGED', DONE:'DONE', REJECT:'REJECTED', ERR:'FAILED', FAIL:'FAILED'}[match[4]];
+  finishDelivery(pending, `${label}: ${pending.name}: ${match[5]}.`, success);
+  if(success){
+    const flightState=/^ST=([0-5])(?:;|$)/.exec(match[5]);
+    if((pending.name==='STATUS' || pending.name==='RESETPAD') && flightState)setPhase(INO_STATE_MAP[flightState[1]]);
+    if(pending.name==='RESETPAD' && match[4]==='DONE'){
+      const mission=/(?:^|;)MISSION=(\d+)(?:;|$)/.exec(match[5]);
+      onboardMission={id:mission?Number(mission[1]):0,quality:0,elapsed:0,recovery:1,received:Date.now()};
+      document.getElementById('mission-time').textContent=missionTimeStr();
+    }
+    if(match[5]==='TELEM_ON')applyTelemetryState(true);
+    if(match[5]==='TELEM_OFF')applyTelemetryState(false);
+    const tx=/(?:^|;)TX=([01])(?:;|$)/.exec(match[5]);
+    if(tx)applyTelemetryState(tx[1]==='1');
+    const rate=/(?:^|;)RATE=(\d+)(?:;|$)/.exec(match[5]);
+    if(rate)rocketStaleMs=Math.max(3000,Number(rate[1])*3);
+  }
+  if (success && pending.onSuccess) pending.onSuccess(match[5]);
+  updateCameraControls();
+  return true;
+}
+
+const CSV_HEADER = [
+  'team','timestamp','packet','alt','pres','temp','volt',
+  'gnss_time','lat','lon','gpsalt','sats',
+  'accel_x','accel_y','accel_z',
+  'gyro_x','gyro_y','gyro_z',
+  'state','aero','counter_epoch','cmd','source'
+];
+
+const PHASES    = ['PAD','POWERED_ASCENT','COAST','APOGEE','PARACHUTE_DESCENT','LANDED'];
+const PHASE_IDS = ['ph-launchpad','ph-ascent','ph-coast','ph-apogee','ph-descent','ph-landed'];
+const INO_STATE_MAP = {
+  '0':'PAD', '1':'POWERED_ASCENT', '2':'COAST',
+  '3':'APOGEE', '4':'PARACHUTE_DESCENT', '5':'LANDED'
+};
+
+/* ══════════════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════════════ */
+let serialPort   = null;
+let serialReader = null;
+let serialReadTask = null;
+let serialClosing = false;
+let simActive    = false;
+let simInterval  = null;
+let telemetryOn  = null; // unknown until an actual STATUS/TELEM ACK or SYS heartbeat
+let telemetryRequested = null, telemetryLastConfirmed = null;
+let lastRocketPacketMs=0,lastRocketAltitude=NaN,rocketStaleMs=3000;
+let missionStart = null;
+let missionTimer = null;
+let onboardMission = null;
+let packetRx=0, packetTx=0, packetErr=0;
+
+// ── CSV recording: always accumulates every live packet ──
+let csvRows      = [];          // live-recorded rows (auto-appends every ingestData call)
+let csvRecording = false;       // true once first real packet arrives
+let csvFilename  = '';
+let currentPhase = 'PAD';
+let mapMarker    = null;
+let mapPath      = [];
+let mapPolyline  = null;
+let simCsvRows=[];
+let simCsvIdx=0;
+let darkMode     = true;
+let cmdHistory   = [];
+let cmdHistIdx   = -1;
+let serialLogLines = [];
+
+const N = CONFIG.MAX_POINTS;
+const buf = {
+  t:[], temp:[], alt:[], pres:[], volt:[], gpsalt:[],
+  gx:[], gy:[], gz:[], ax:[], ay:[], az:[],ctemp:[], cpres:[], cvolt:[], calt:[],
+  ct:[], cgx:[], cgy:[], cgz:[], cax:[], cay:[], caz:[], aero_alt:[]
+};
+
+/* ══════════════════════════════════════════════════════
+   PLOTLY SETUP
+══════════════════════════════════════════════════════ */
+const PLOT_LAYOUT = () => ({
+  paper_bgcolor:'transparent', plot_bgcolor:'transparent',
+  margin:{t:0,b:18,l:36,r:4},
+  font:{family:'Share Tech Mono',size:8,color:'#5a7a9a'},
+  xaxis:{showgrid:false,zeroline:false,showline:false,tickfont:{size:7}},
+  yaxis:{showgrid:true,gridcolor:'rgba(42,63,95,0.35)',zeroline:false,showline:false,tickfont:{size:7}},
+  showlegend:false
+});
+const SCATTER_LAYOUT = () => ({
+  ...PLOT_LAYOUT(),
+  xaxis:{...PLOT_LAYOUT().xaxis, title:{text:'Altitude (m)',font:{size:7,color:'#5a7a9a'},standoff:2}},
+  yaxis:{...PLOT_LAYOUT().yaxis, title:{text:'Concentration (µg/m³)',font:{size:7,color:'#5a7a9a'},standoff:2}},
+  margin:{t:0,b:28,l:48,r:4},
+});
+const PLOT_CONFIG = {displayModeBar:false, responsive:true};
+
+function mkLine(color, dash) {
+  const hex = color.startsWith('#') ? color : '#00e5ff';
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return {x:[],y:[],mode:'lines',
+    line:{color,width:1.5,...(dash?{dash}:{})},
+    fill: dash ? 'none' : 'tozeroy', fillcolor:`rgba(${r},${g},${b},0.07)`,
+    type:'scatter'};
+}
+function mkScatter(color) {
+  return {x:[],y:[],mode:'markers',
+    marker:{color,size:4,opacity:0.7},
+    type:'scatter'};
+}
+
+const plots = {
+  temp: {id:'plot-temp', traces:[mkLine('#ff6b35'), mkLine('#ff4fa3','dash')], cx:[1]},
+  alt:  {id:'plot-alt',  traces:[mkLine('#00e5ff'), mkLine('#bf80ff'), mkLine('#39ff14','dash')], cx:[2]},
+  pres: {id:'plot-pres', traces:[mkLine('#ffd700'), mkLine('#4da3ff','dash')], cx:[1]},
+  volt: {id:'plot-volt', traces:[mkLine('#ff3a3a'), mkLine('#1de9b6','dash')], cx:[1]},
+  gyro:     {id:'plot-gyro',     traces:[mkLine('#ff3a3a'),mkLine('#39ff14'),mkLine('#bf80ff')]},
+  accel:    {id:'plot-accel',    traces:[mkLine('#ff3a3a'),mkLine('#39ff14'),mkLine('#bf80ff')]},
+  cgyro:  {id:'plot-cgyro',  traces:[mkLine('#ff3a3a'),mkLine('#39ff14'),mkLine('#bf80ff')]},
+  caccel: {id:'plot-caccel', traces:[mkLine('#ff3a3a'),mkLine('#39ff14'),mkLine('#bf80ff')]},
+  aeroAlt:  {id:'plot-aero-alt', traces:[mkScatter('#a020f0')]},
+};
+
+function initPlots() {
+  for (const p of Object.values(plots)) {
+    if (p.id === 'plot-aero-alt') {
+      Plotly.newPlot(p.id, p.traces, SCATTER_LAYOUT(), PLOT_CONFIG);
+    } else {
+      Plotly.newPlot(p.id, p.traces, PLOT_LAYOUT(), PLOT_CONFIG);
+    }
+  }
+}
+
+function updatePlot(key, ...ys) {
+  const p = plots[key];
+  const newTraces = p.traces.map((t,i) => ({...t, x:(p.cx && p.cx.includes(i) ? buf.ct : buf.t).slice(), y:(ys[i]||[]).slice()}));
+  if (key === 'aeroAlt') {
+    Plotly.react(p.id, [{...p.traces[0], x:buf.aero_alt.map(v=>v[0]), y:buf.aero_alt.map(v=>v[1])}], SCATTER_LAYOUT(), PLOT_CONFIG);
+  } else {
+    Plotly.react(p.id, newTraces, PLOT_LAYOUT(), PLOT_CONFIG);
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   MAP
+══════════════════════════════════════════════════════ */
+let map = null;
+let markerIcon = null;
+
+const MAPTILER_KEY = ''; // Add your MapTiler API key here.
+
+function initMap() {
+  map = L.map('map', { zoomControl: true })
+    .setView([26.7606, 83.3732], 10);
+
+  L.tileLayer(
+    `https://api.maptiler.com/maps/streets-v4/256/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`,
+    {
+      minZoom: 1,
+      maxZoom: 19,
+      attribution:
+        '&copy; MapTiler &copy; OpenStreetMap contributors'
+    }
+  ).addTo(map);
+  new ResizeObserver(() => map.invalidateSize()).observe(document.getElementById('map'));
+  requestAnimationFrame(() => map.invalidateSize());
+
+  markerIcon = L.divIcon({
+    html: `<div style="
+      width:12px;
+      height:12px;
+      background:#00e5ff;
+      border-radius:50%;
+      border:2px solid #fff;
+      box-shadow:0 0 8px #00e5ff;
+    "></div>`,
+    iconSize: [12, 12],
+    iconAnchor: [6, 6],
+    className: ''
+  });
+}
+
+
+function updateMap(lat, lon) {
+  if (!map || !Number.isFinite(lat) || !Number.isFinite(lon) ||
+      Math.abs(lat)>90 || Math.abs(lon)>180 || (lat===0 && lon===0)) return;
+  if (!mapMarker) {
+    mapMarker = L.marker([lat,lon],{icon:markerIcon}).addTo(map);
+    map.setView([lat,lon],13);
+  } else {
+    mapMarker.setLatLng([lat,lon]);
+  }
+  mapPath.push([lat,lon]);
+  if (mapPolyline) map.removeLayer(mapPolyline);
+  mapPolyline = L.polyline(mapPath,{color:'#00e5ff',weight:1.5,opacity:.7}).addTo(map);
+}
+
+/* ══════════════════════════════════════════════════════
+   WEB SERIAL API
+══════════════════════════════════════════════════════ */
+async function connectSerial() {
+  if (serialPort) { await disconnectSerial(); return; }
+  if (!('serial' in navigator)) {
+    toast('Web Serial not supported — use Chrome/Edge'); return;
+  }
+  try {
+    serialPort = await navigator.serial.requestPort();
+    await serialPort.open({baudRate: CONFIG.BAUD_RATE});
+    document.getElementById('connect-btn').textContent = 'DISCONNECT';
+    document.getElementById('connect-btn').classList.add('connected');
+    document.getElementById('serial-dot').classList.add('ok');
+    document.getElementById('serial-status').textContent = 'CONNECTED';
+    document.getElementById('baud-status').textContent = CONFIG.BAUD_RATE;
+    logSerial(`Serial connected @ ${CONFIG.BAUD_RATE} baud`,'resp');
+    toast('Serial connected');
+    // Stop simulation when real serial connects
+    simActive = false;
+    stopSim();
+    document.getElementById('sim-badge').classList.remove('active');
+    onboardMission = null;
+    startMissionTimer(); // display only: connection never starts mission time
+    cameraSerialReady = true;
+    serialReadTask = readSerial();
+    updateCameraControls();
+    applyTelemetryState(null);
+    // Read actual firmware state; reconnecting must never change telemetry.
+    // Fresh PAD firmware boots OFF. The existing telemetry button requests ON.
+    await sendFlightCommand('STATUS');
+  } catch(e) {
+    toast('Serial error: ' + e.message);
+    logSerial('ERR: ' + e.message, 'err');
+    if (serialPort) { try { await serialPort.close(); } catch (_) {} serialPort = null; }
+    showSerialDisconnected();
+  }
+}
+
+async function disconnectSerial() {
+  serialClosing = true;
+  try {
+    if (serialReader) await serialReader.cancel();
+    if (serialReadTask) await serialReadTask;
+    if (serialPort) await serialPort.close();
+    serialPort = null;
+  } catch(e) { logSerial('Disconnect error: ' + e.message, 'err'); }
+  finally { serialClosing = false; serialReadTask = null; showSerialDisconnected(); }
+  toast('Serial disconnected');
+}
+
+function showSerialDisconnected() {
+  document.getElementById('connect-btn').textContent = 'CONNECT SERIAL';
+  document.getElementById('connect-btn').classList.remove('connected');
+  document.getElementById('serial-dot').classList.remove('ok');
+  document.getElementById('serial-status').textContent = 'DISCONNECTED';
+  document.getElementById('baud-status').textContent = '—';
+  cameraConnectionLost();
+}
+
+async function readSerial() {
+  const decoder = new TextDecoderStream();
+  const port = serialPort;
+  const pipeDone = port.readable.pipeTo(decoder.writable).catch(() => {});
+  const reader = decoder.readable.getReader();
+  serialReader = reader;
+  let lineBuf = '';
+  try {
+    while (true) {
+      const {value, done} = await reader.read();
+      if (done) break;
+      lineBuf += value;
+      const lines = lineBuf.split('\n');
+      lineBuf = lines.pop();
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !handleBridgeStatus(trimmed)) {
+          logSerial('[SER] ' + trimmed, 'resp');
+          if (!handleSystemPacket(trimmed) && !handleCameraAck(trimmed)) parsePacket(trimmed);
+        }
+      }
+    }
+  } catch(e) {
+    if (serialPort) { toast('Serial read error: '+e.message); logSerial('ERR: '+e.message,'err'); }
+  } finally {
+    reader.releaseLock();
+    if (serialReader === reader) serialReader = null;
+    await pipeDone;
+    cameraConnectionLost();
+    if (!serialClosing && serialPort === port) {
+      try { await port.close(); } catch (_) {}
+      serialPort = null;
+      showSerialDisconnected();
+    }
+  }
+}
+
+// FIX: Guard against disconnected serial — don't toggle button state if cmd fails
+async function sendCmd(cmd) {
+  logCmd('> ' + cmd);
+  if (!serialPort || !serialPort.writable) {
+    logCmd('ERR: not connected — serial port unavailable','err');
+    // Do NOT proceed; caller must handle state revert if needed
+    return false;
+  }
+  try {
+    const writer = serialPort.writable.getWriter();
+    try {
+      await writer.write(new TextEncoder().encode(cmd+'\n'));
+    } finally {
+      writer.releaseLock();
+    }
+    packetTx++;
+    updatePackets();
+    logCmd('Serial write complete; execution unconfirmed', 'resp');
+    return true;
+  } catch(e) {
+    logCmd('ERR: '+e.message,'err');
+    packetErr++;
+    updatePackets();
+    return false;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   PACKET PARSER  (matches Arduino buildPacket)
+   0:team, 1:timestamp, 2:packet, 3:alt, 4:pres, 5:temp, 6:volt,
+   7:gnss_time, 8:lat, 9:lon, 10:gpsalt, 11:sats,
+   3:barometer-referenced fused height (m), 4:pressure (Pa), 5:temperature (C)
+   12:"ax;ay;az" (m/s^2), 13:"gx;gy;gz" (deg/s; older sources: scalar)
+   14:flightState(number), 15:state text or optional source data
+══════════════════════════════════════════════════════ */
+function telemetryNumber(value) {
+  if(value==null || String(value).trim()==='')return NaN;
+  const number=Number(value);return Number.isFinite(number)?number:NaN;
+}
+function rejectVehiclePacket(reason) {
+  logSerial('Rejected packet: '+reason,'err');
+  packetErr++;updatePackets();
+}
+function noteVehiclePacket(kind,address='23:R') {
+  receivedLinks[address]=`${kind} at ${new Date().toLocaleTimeString()}`;
+  document.getElementById('vehicle-status').textContent=
+    `ROCKET: ${receivedLinks['23:R'] || 'waiting'} | CANSAT: ${receivedLinks['23:C'] || 'waiting'}`+
+    (cansatLink.synthetic?' [SYNTHETIC TEST]':'')+' | Commands: ROCKET';
+}
+function acceptCounterEpoch(epoch,address='23:R') {
+  if(address==='23:C'){
+    if(!Number.isInteger(epoch) || epoch<0 || epoch>0xFFFFFFFF || epoch<cansatLink.epoch){
+      rejectVehiclePacket('CanSat invalid/delayed counter epoch '+epoch);return false;
+    }
+    if(epoch>cansatLink.epoch){cansatLink.epoch=epoch;cansatLink.lastPacket=0;cansatLink.rx=0;updatePackets();}
+    return true;
+  }
+  if(!Number.isInteger(epoch) || epoch<0 || epoch>0xFFFFFFFF || epoch<lastCounterEpoch){
+    rejectVehiclePacket('invalid/delayed counter epoch '+epoch);return false;
+  }
+  if(epoch>lastCounterEpoch){
+    lastCounterEpoch=epoch;lastVehiclePacket=0;packetRx=0;updatePackets();
+    logSerial('Vehicle packet counter reset confirmed; epoch '+epoch,'resp');
+  }
+  return true;
+}
+function parsePacket(raw) {
+  const frame=/^([^*\r\n]+)\*([0-9A-Fa-f]{2})$/.exec(raw);
+  if(!frame || cameraChecksum(frame[1])!==frame[2].toUpperCase()){
+    rejectVehiclePacket('missing/invalid telemetry checksum');return;
+  }
+  raw=frame[1];
+  const parts = raw.split(',');
+  if(parts[0]!=='23:R' && parts[0]!=='23:C'){rejectVehiclePacket('unknown address '+parts[0]);return;}
+  if (parts.length !== 16) {
+    logSerial(`BAD PACKET: ${parts.length} fields (need 16)`, 'err');
+    packetErr++; updatePackets(); return;
+  }
+  try {
+    // accel arrives as "x;y;z" in a single field
+    const acc = (parts[12] || '').split(';').map(telemetryNumber);
+    const gyro = (parts[13] || '').split(';').map(telemetryNumber);
+
+
+    // flightState arrives as a number -> map to phase name
+    const stateRaw    = (parts[14] || '').trim().toUpperCase();
+    const mappedState = INO_STATE_MAP[stateRaw];
+    if(!mappedState){rejectVehiclePacket('invalid flight state '+stateRaw);return;}
+
+    // optionalData: numeric -> aero reading, otherwise treat as a command/text
+    const optParts = (parts[15] || '').trim().split(';');
+    // Command-capable Teensy baseline has 16 fields ending in state text.
+    // Accept that exact legacy layout without changing flight telemetry.
+    const legacyRocket = parts.length === 16 && ['PAD','POWERED_ASCENT','COAST','APOGEE','PARACHUTE_DESCENT','LANDED'].includes(parts[15].trim());
+    const src = legacyRocket ? 1 : optParts[0]==='1'?1:optParts[0]==='2'?2:0;
+    if (src !== (parts[0]==='23:R'?1:2)) {
+      logSerial(`BAD SOURCE ID "${optParts[0]}" (expected 1=rocket or 2=cansat)`, 'err');
+      packetErr++; updatePackets(); return;
+    }
+    const epochTokens=optParts.slice(1).filter(v=>v.startsWith('E='));
+    if(epochTokens.length>1 || (epochTokens.length && !/^E=\d+$/.test(epochTokens[0]))){
+      rejectVehiclePacket('invalid counter epoch');return;
+    }
+    const counterEpoch=epochTokens.length?Number(epochTokens[0].slice(2)):0;
+    const isCansat = (src === 2);
+    const aeroVal  = isCansat ? parseFloat(optParts[1]) : NaN;
+
+
+    const d = {
+      source: isCansat ? 'cansat' : 'rocket',
+      team:      parts[0] || '2026 IN-SPACe-023',
+      gnss_time: (parts[7] || '').trim(),
+      sats:      parseInt(parts[11]) || 0,
+      packet:    /^\d+$/.test(parts[2]) && Number(parts[2])<=0xFFFFFFFF ? Number(parts[2]) : null,
+      alt:       telemetryNumber(parts[3]),
+      pres:      telemetryNumber(parts[4]),
+      temp:      telemetryNumber(parts[5]),
+      volt:      telemetryNumber(parts[6]),
+      lat:       parseFloat(parts[8])  || 0,
+      lon:       parseFloat(parts[9])  || 0,
+      gpsalt:    parseFloat(parts[10]) || 0,
+      ax: acc[0] ?? NaN, ay: acc[1] ?? NaN, az: acc[2] ?? NaN,
+      // only a single gyro spin value is sent, so it goes on Z
+      gx: gyro[0] ?? NaN, gy: gyro[1] ?? NaN, gz: gyro[2] ?? NaN,
+      state:     mappedState,
+      aero:  isNaN(aeroVal) ? null : aeroVal,   // null = no aerosol reading
+      counter_epoch: counterEpoch,
+      cmd:   (legacyRocket ? parts[15] : (parts[16] || '')).trim(),
+      _rawTimestamp: (parts[1] || '').trim(),
+      
+    };
+    if(!Number.isInteger(d.packet) || d.packet<1){
+      rejectVehiclePacket('invalid sequence '+d.packet);return;
+    }
+    if(!acceptCounterEpoch(counterEpoch,parts[0]))return;
+    if(d.packet<=(isCansat?cansatLink.lastPacket:lastVehiclePacket)){
+      rejectVehiclePacket('invalid/duplicate/delayed sequence '+d.packet);return;
+    }
+    if(isCansat){cansatLink.lastPacket=d.packet;cansatLink.synthetic=optParts.includes('FAKE=1');}
+    else lastVehiclePacket=d.packet;
+    noteVehiclePacket('telemetry #'+d.packet+' / epoch '+counterEpoch,parts[0]);
+    if(missionStart===null)missionStart=Date.now();
+    startMissionTimer();
+    document.getElementById('mission-time').textContent=missionTimeStr();
+    ingestData(d);
+    if(isCansat)cansatLink.rx++;else packetRx++;
+    updatePackets();
+  } catch (e) {
+    packetErr++;
+    updatePackets();
+    logSerial('Parse ERR: ' + e.message, 'err');
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   DATA INGESTION
+══════════════════════════════════════════════════════ */
+function push(arr, v) { arr.push(v); if (arr.length > N) arr.shift(); }
+function ingestCansat(d) {
+  const t = buf.ct.length ? buf.ct[buf.ct.length-1]+1 : 0;
+  push(buf.ct, t);
+  push(buf.cgx, d.gx); push(buf.cgy, d.gy); push(buf.cgz, d.gz);
+  push(buf.cax, d.ax); push(buf.cay, d.ay); push(buf.caz, d.az);
+  push(buf.ctemp, d.temp); push(buf.cpres, d.pres); push(buf.cvolt, d.volt); push(buf.calt, d.alt);
+
+  document.getElementById('val-ctemp').textContent = `C:${d.temp.toFixed(1)} °C`;
+  document.getElementById('val-calt').textContent  = `C:${d.alt.toFixed(1)} m`;
+  document.getElementById('val-cpres').textContent = `C:${Math.round(d.pres)} Pa`;
+  document.getElementById('val-cvolt').textContent = `C:${d.volt.toFixed(2)} V`;
+  document.getElementById('val-cgyro').textContent = `X:${d.gx.toFixed(1)} Y:${d.gy.toFixed(1)} Z:${d.gz.toFixed(1)}`;
+  document.getElementById('val-caccel').textContent = `X:${d.ax.toFixed(2)} Y:${d.ay.toFixed(2)} Z:${d.az.toFixed(2)}`;
+  const safe = (name, fn) => { try { fn(); } catch(e) { logSerial(`Plot ${name}: ${e.message}`, 'err'); } };
+  safe('cgyro',  () => updatePlot('cgyro',  buf.cgx, buf.cgy, buf.cgz));
+  safe('caccel', () => updatePlot('caccel', buf.cax, buf.cay, buf.caz));
+  safe('temp', () => updatePlot('temp', buf.temp, buf.ctemp));
+  safe('alt',  () => updatePlot('alt',  buf.alt, buf.gpsalt, buf.calt));
+  safe('pres', () => updatePlot('pres', buf.pres, buf.cpres));
+  safe('volt', () => updatePlot('volt', buf.volt, buf.cvolt));
+
+  if (d.aero != null) {
+    push(buf.aero_alt, [d.alt, d.aero]);
+    document.getElementById('val-aero-alt').textContent = `${d.aero.toFixed(1)} µg/m³ @ ${d.alt.toFixed(0)}m`;
+    safe('aeroAlt', () => updatePlot('aeroAlt'));
+  }
+}
+
+function ingestRocket(d) {
+  lastRocketPacketMs=Date.now();lastRocketAltitude=d.alt;
+  const t = buf.t.length ? buf.t[buf.t.length-1]+1 : 0;
+  push(buf.t,      t);
+  push(buf.temp,   d.temp);
+  push(buf.alt,    d.alt);
+  push(buf.pres,   d.pres);
+  push(buf.volt,   d.volt);
+  push(buf.gpsalt, d.gpsalt);
+  push(buf.gx, d.gx); push(buf.gy, d.gy); push(buf.gz, d.gz);
+  push(buf.ax, d.ax); push(buf.ay, d.ay); push(buf.az, d.az);
+
+
+  document.getElementById('val-temp').textContent   = d.temp.toFixed(1)+' °C';
+  document.getElementById('val-alt').textContent    = `B:${Number.isFinite(d.alt)?d.alt.toFixed(1)+' m':'INVALID/STALE'} G:${d.gpsalt.toFixed(1)} m`;
+  document.getElementById('val-pres').textContent   = Math.round(d.pres)+' Pa';
+  document.getElementById('val-volt').textContent   = Number.isFinite(d.volt) ? d.volt.toFixed(2)+' V' : 'UNKNOWN';
+  document.getElementById('val-gyro').textContent   = `X:${d.gx.toFixed(1)} Y:${d.gy.toFixed(1)} Z:${d.gz.toFixed(1)}`;
+  document.getElementById('val-accel').textContent  = `X:${d.ax.toFixed(2)} Y:${d.ay.toFixed(2)} Z:${d.az.toFixed(2)}`;
+  document.getElementById('t-lat').textContent  = d.lat.toFixed(4);
+  document.getElementById('t-lon').textContent  = d.lon.toFixed(4);
+  document.getElementById('t-galt').textContent = d.gpsalt.toFixed(2);
+
+  if (d.state) setPhase(d.state.toUpperCase());
+  updateMap(d.lat, d.lon);
+
+  const safe = (name, fn) => { try { fn(); } catch(e) { logSerial(`Plot ${name}: ${e.message}`, 'err'); console.error(name, e); } };
+  safe('temp', () => updatePlot('temp', buf.temp, buf.ctemp));
+  safe('alt',  () => updatePlot('alt',  buf.alt, buf.gpsalt, buf.calt));
+  safe('pres', () => updatePlot('pres', buf.pres, buf.cpres));
+  safe('volt', () => updatePlot('volt', buf.volt, buf.cvolt));
+  safe('gyro',  () => updatePlot('gyro',  buf.gx, buf.gy, buf.gz));
+  safe('accel', () => updatePlot('accel', buf.ax, buf.ay, buf.az));
+}
+
+function ingestData(d) {
+  if (d.source === 'cansat') ingestCansat(d); else ingestRocket(d);
+
+  // ── LIVE CSV RECORDING (runs for both sources) ──
+  const missionTs = missionTimeStr();
+  const ts = (d._rawTimestamp && d._rawTimestamp.trim()) ? d._rawTimestamp.trim() : missionTs;
+
+  const row = [
+    d.team, ts, d.packet==null?packetRx+1:d.packet,
+    d.alt, d.pres, d.temp, d.volt,
+    d.gnss_time, d.lat, d.lon, d.gpsalt, d.sats,
+    d.ax, d.ay, d.az,
+    d.gx, d.gy, d.gz,
+    d.state || currentPhase, (d.aero == null ? '' : d.aero), d.counter_epoch ?? 0, d.cmd || '', d.source || 'rocket'
+  ];
+  csvRows.push(row);
+  csvRecording = true;
+  updateCsvRecIndicator();
+}
+
+/* ══════════════════════════════════════════════════════
+   CSV RECORDING INDICATOR
+══════════════════════════════════════════════════════ */
+function updateCsvRecIndicator() {
+  const dot    = document.getElementById('csv-rec-dot');
+  const status = document.getElementById('csv-rec-status');
+  const count  = document.getElementById('csv-rec-count');
+  const btnDot = document.getElementById('dot-csv-rec');
+
+  if (csvRows.length > 0) {
+    dot.className    = 's-dot recording';
+    status.textContent = 'REC';
+    btnDot.className = 'btn-dot recording';
+  } else {
+    dot.className    = 's-dot';
+    status.textContent = 'IDLE';
+    btnDot.className = 'btn-dot off';
+  }
+  count.textContent = csvRows.length + ' rows';
+}
+
+/* ══════════════════════════════════════════════════════
+   SIMULATION — CSV-driven playback only
+   Clicking SIMULATION badge prompts for a CSV file,
+   then replays it row-by-row at 1 packet / second.
+══════════════════════════════════════════════════════ */
+
+function stopSim() {
+  if (simInterval) { clearInterval(simInterval); simInterval = null; }
+  updateCameraControls();
+}
+
+function toggleSim() {
+  if (simActive) {
+    simActive = false;
+    stopSim();
+    simCsvRows = []; simCsvIdx = 0;
+    document.getElementById('sim-badge').classList.remove('active');
+    toast('SIMULATION STOPPED');
+    return;
+  }
+  // Prompt user to pick a CSV file to drive the simulation
+  const input = document.createElement('input');
+  input.type   = 'file';
+  input.accept = '.csv';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const lines = ev.target.result.trim().split(/\r?\n/);
+      if (lines.length < 2) { toast('CSV empty or malformed'); return; }
+
+      const hdr = lines[0].split(',').map(h => h.trim().toLowerCase());
+      function idx(name)               { return hdr.indexOf(name); }
+      function fv(parts, name, def=0)  { const i=idx(name); return i>=0 ? (parseFloat(parts[i])||def) : def; }
+      function sv(parts, name, def='') { const i=idx(name); return i>=0 ? (parts[i]||def) : def; }
+
+      simCsvRows = [];
+      for (let i=1; i<lines.length; i++) {
+        const parts = lines[i].split(',').map(p => p.trim().replace(/^"|"$/g,''));
+        if (parts.length < 2 || parts.every(p=>p==='')) continue;
+        const inoState    = sv(parts,'state','LAUNCH_PAD').toUpperCase();
+        const mappedState = INO_STATE_MAP[inoState] || inoState || 'LAUNCH_PAD';
+        simCsvRows.push({
+          team:          sv(parts,'team','2026 IN-SPACe-023'),
+          gnss_time:     sv(parts,'gnss_time',''),
+          _rawTimestamp: sv(parts,'timestamp',''),
+          sats:          Math.round(fv(parts,'sats',0)),
+          packet:        Math.round(fv(parts,'packet',i)),
+          alt:           fv(parts,'alt'),
+          pres:          fv(parts,'pres'),
+          temp:          fv(parts,'temp'),
+          volt:          fv(parts,'volt'),
+          lat:           fv(parts,'lat'),
+          lon:           fv(parts,'lon'),
+          gpsalt:        fv(parts,'gpsalt'),
+          ax: fv(parts,'accel_x'), ay: fv(parts,'accel_y'), az: fv(parts,'accel_z'),
+          gx: fv(parts,'gyro_x'),  gy: fv(parts,'gyro_y'),  gz: fv(parts,'gyro_z'),
+          aero:   sv(parts,'aero','')==='' ? null : fv(parts,'aero'),
+          source: sv(parts,'source','rocket').toLowerCase()==='cansat' ? 'cansat' : 'rocket',
+          state: mappedState,
+          cmd:   sv(parts,'cmd',''),
+        });
+      }
+
+      if (!simCsvRows.length) { toast('No valid rows found in CSV'); return; }
+
+      // Sync mission timer to the first row's timestamp
+      const firstTs = simCsvRows[0]._rawTimestamp || '';
+      const tp = firstTs.split(':');
+      const firstSec = tp.length===3 ? (+tp[0])*3600 + (+tp[1])*60 + (+tp[2]) : 0;
+      if (missionTimer) { clearInterval(missionTimer); missionTimer=null; }
+      missionStart = Date.now() - firstSec*1000;
+      missionTimer = setInterval(()=>{
+        document.getElementById('mission-time').textContent = missionTimeStr();
+      }, 1000);
+
+      simCsvIdx = 0;
+      simActive = true;
+      updateCameraControls();
+      document.getElementById('sim-badge').classList.add('active');
+      toast(`SIM: ${file.name} · ${simCsvRows.length} rows`);
+      logSerial(`[SIM] Loaded ${file.name} (${simCsvRows.length} rows)`, 'resp');
+
+      // Replay one row per second
+      simInterval = setInterval(() => {
+        if (simCsvIdx >= simCsvRows.length) {
+          stopSim();
+          simActive = false;
+          updateCameraControls();
+          document.getElementById('sim-badge').classList.remove('active');
+          toast('SIM COMPLETE — end of CSV');
+          logSerial('[SIM] Playback complete', 'resp');
+          return;
+        }
+        const d = simCsvRows[simCsvIdx++];
+        ingestData(d);
+        packetRx++;
+        updatePackets();
+        logSerial(`[SIM ${simCsvIdx}/${simCsvRows.length}] phase=${d.state} alt=${d.alt}m`, 'resp');
+      }, 1000);
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function resetSimulation() {
+  simActive = false;
+  stopSim();
+  simCsvRows = []; simCsvIdx = 0;
+  document.getElementById('sim-badge').classList.remove('active');
+  resetState();
+  toast('Simulation Reset');
+}
+/* ══════════════════════════════════════════════════════
+   MISSION TIMER
+══════════════════════════════════════════════════════ */
+function startMissionTimer() {
+  if (missionTimer) return;
+  missionTimer = setInterval(()=>{
+    document.getElementById('mission-time').textContent = missionTimeStr();
+    if(!simActive && lastRocketPacketMs && Date.now()-lastRocketPacketMs>rocketStaleMs)
+      document.getElementById('val-alt').textContent=
+        `B:${telemetryOn===false?'PAUSED':'STALE'} (last ${Number.isFinite(lastRocketAltitude)?lastRocketAltitude.toFixed(1)+' m':'invalid'})`;
+  },1000);
+}
+
+function missionTimeStr() {
+  const elapsed=missionStart===null?0:Math.max(0,Date.now()-missionStart);
+  const s = Math.floor(elapsed/1000);
+  return [Math.floor(s/3600),Math.floor((s%3600)/60),s%60].map(v=>String(v).padStart(2,'0')).join(':');
+}
+
+function handleSystemPacket(raw) {
+  if(!raw.startsWith('$SYS'))return false;
+  const match=/^\$(SYS,[^*\r\n]+)\*([0-9A-Fa-f]{2})$/.exec(raw);
+  if(!match || cameraChecksum(match[1])!==match[2].toUpperCase())return true;
+  const p=match[1].split(',');
+  if((p.length<14 || p.length>17) || (p[1]!=='23:R' && p[1]!=='23:C') ||
+     !p.slice(2,4).every(v=>/^\d+$/.test(v)) || !p.slice(5,9).every(v=>/^\d+$/.test(v)))return true;
+  const quality=Number(p[3]),elapsed=Number(p[4]);
+  if(quality>3 || (quality===3?p[4]!=='NA':(!/^\d+$/.test(p[4]) || !Number.isSafeInteger(elapsed))) ||
+     Number(p[5])>4 || Number(p[6])>5 || !/^[01]$/.test(p[7]) || !/^[01]$/.test(p[8]) ||
+     !/^\d+$/.test(p[11]) || !/^[01]$/.test(p[12]) || !/^[0-4]$/.test(p[13]) ||
+     (p.length>=15 && !/^[01]$/.test(p[14])) || (p.length>=16 && !/^[0-5]$/.test(p[15])))return true;
+  if(!acceptCounterEpoch(p.length===17 && /^\d+$/.test(p[16])?Number(p[16]):p.length===17?NaN:0,p[1]))return true;
+  noteVehiclePacket('SYS',p[1]);
+  if(p[1]==='23:C')return true; // peer health never changes rocket command/mission state
+  onboardMission={id:Number(p[2]),quality,elapsed,recovery:Number(p[5]),received:Date.now()};
+  if(p.length>=15 && (!cameraPending || cameraPending.name!=='TELEM')){
+    applyTelemetryState(p[14]==='1');updateCameraControls();
+  }
+  const storage=['UNAVAILABLE','SCANNING','READY','FAULT','FULL','FOREIGN'][Number(p[6])]||'UNKNOWN';
+  const recovery=['SCANNING','NEW/READY','COMPLETED','RECOVERED','HOLD'][Number(p[5])]||'UNKNOWN';
+  const automatic=['IDLE','PENDING','SENT UNCONFIRMED','FAILED/INHIBITED','MANUAL'][Number(p[13])]||'UNKNOWN';
+  const sequence=p.length>=16?['RECOVERING','READY','LEGACY BASELINE REQUIRED: see COUNTER instructions','STORAGE BLOCKED','EXHAUSTED','RESERVING'][Number(p[15])]:'UNKNOWN';
+  document.getElementById('mission-status').textContent=
+    `Mission ${p[2]} ${recovery}; flash ${storage}; RTC ${p[7]==='1'?'valid':'invalid'}; `+
+    (p[8]==='1'?(Number.isFinite(telemetryNumber(p[9])) && Number.isFinite(telemetryNumber(p[10]))?
+      `INA ${p[9]} mA / ${p[10]} mW`:'INA valid; measurements paused/unavailable'):'INA unavailable')+
+    `; dropped ${p[11]}; ${p[12]==='1'?'armed':'unarmed'}; auto-stop ${automatic}; sequence ${sequence}; epoch ${lastCounterEpoch}`;
+  document.getElementById('mission-time').textContent=missionTimeStr();
+  startMissionTimer();return true;
+}
+
+function armMission() {
+  if(simActive){toast('Arming is unavailable during replay.');return;}
+  if(!window.confirm('Initialize a new flight mission? Keep the rocket stationary. This does not erase flight logs.'))return;
+  return sendFlightCommand('ARM',onboardMission && onboardMission.recovery===4?'CONFIRM':undefined);
+}
+
+/* ══════════════════════════════════════════════════════
+   PHASE
+══════════════════════════════════════════════════════ */
+function setPhase(phase) {
+  // Preserve old CSV replay names without inventing a probe-release phase.
+  const aliases={LAUNCH_PAD:'PAD',ASCENT:'POWERED_ASCENT',DESCENT:'PARACHUTE_DESCENT'};
+  phase=String(phase).toUpperCase();phase=INO_STATE_MAP[phase] || aliases[phase] || phase;
+  currentPhase = phase;
+  const idx = PHASES.indexOf(phase);
+  PHASE_IDS.forEach((id,i) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('active','past');
+    if (i < idx) el.classList.add('past');
+    if (i === idx) el.classList.add('active');
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   CONTROLS — FIX: buttons don't toggle state if sendCmd fails
+══════════════════════════════════════════════════════ */
+function applyTelemetryState(next) {
+  telemetryOn = next;
+  if(typeof next==='boolean')telemetryLastConfirmed=next;
+  document.getElementById('dot-telemetry').className = 'btn-dot ' + (next ? 'green' : '');
+  document.getElementById('btn-telemetry').lastChild.textContent = 'Telemetry ' + (next===true?'ON':next===false?'OFF':'UNKNOWN');
+  renderTelemetryStatus();
+}
+
+function renderTelemetryStatus() {
+  const label=v=>v===true?'ON':v===false?'OFF':'UNKNOWN';
+  document.getElementById('telemetry-status').textContent=
+    `Firmware telemetry ${label(telemetryOn)}; last confirmed ${label(telemetryLastConfirmed)}; `+
+    `requested ${label(telemetryRequested)}`+
+    (cameraPending && cameraPending.name==='TELEM'?' (awaiting flight ACK)':'')+'.';
+}
+
+async function toggleTelemetry() {
+  if(simActive){applyTelemetryState(telemetryOn!==true);return;}
+  if(typeof telemetryOn!=='boolean'){toast('Waiting for firmware telemetry status.');return false;}
+  const next = !telemetryOn;
+  return sendFlightCommand('TELEM', next ? '1' : '0'); // update only from returned state
+}
+
+function calibrateSensors() {
+  if (simActive) { toast('Calibration is unavailable during replay.'); return; }
+  return sendFlightCommand('CAL', 'ALL');
+}
+
+function setTime() {
+  if (simActive) { toast('RTC setting is unavailable during replay.'); return; }
+  return sendFlightCommand('TIME', String(Math.floor(Date.now()/1000)));
+}
+
+function resetPadMission(){
+  if(simActive){toast('Use RESET SIM for replay. PAD reset requires a live flight board.');return false;}
+  if(!window.confirm('Reset the rocket to an unarmed PAD mission? Existing logs and packet numbering are retained.'))return false;
+  return sendFlightCommand('RESETPAD','CONFIRM');
+}
+function resetState() {
+  simActive = false; stopSim();
+  document.getElementById('sim-badge').classList.remove('active');
+  updateCameraControls();
+  csvRows=[];
+  csvRecording=false;
+  for (const k of Object.keys(buf)) buf[k].length=0;
+  simCsvRows=[]; simCsvIdx=0;
+  missionStart=null;
+  if (missionTimer) { clearInterval(missionTimer); missionTimer=null; }
+  document.getElementById('mission-time').textContent='00:00:00';
+  PHASE_IDS.forEach(id => { const el=document.getElementById(id); if(el) el.className='phase-dot'; });
+  ['val-temp','val-alt','val-pres','val-volt','val-gyro','val-accel','val-cgyro','val-caccel','val-aero-alt',
+   'val-ctemp','val-calt','val-cpres','val-cvolt'].forEach(id=>{const el=document.getElementById(id); if(el) el.textContent='';});
+  document.getElementById('t-lat').textContent='00.00';
+  document.getElementById('t-lon').textContent='00.00';
+  document.getElementById('t-galt').textContent='00.00';
+  if (map && mapMarker) { map.removeLayer(mapMarker); mapMarker=null; }
+  if (map && mapPolyline) { map.removeLayer(mapPolyline); mapPolyline=null; }
+  mapPath=[];
+  packetRx=0; packetTx=0; packetErr=0; cansatLink.rx=0;
+  updatePackets();
+  updateCsvRecIndicator();
+  document.getElementById('csv-filename').textContent='—';
+  csvFilename='';
+  initPlots();
+  setPhase('PAD');
+  toast('State reset');
+}
+
+/* ══════════════════════════════════════════════════════
+   CSV DOWNLOAD — saves whatever has been live-recorded
+   Every packet that hits ingestData is already in csvRows.
+   Clicking Download simply snapshots and saves it.
+══════════════════════════════════════════════════════ */
+function downloadCSV() {
+  if (!csvRows.length) { toast('No data recorded yet'); return; }
+
+  const lines = [CSV_HEADER.join(',')];
+  for (const row of csvRows) {
+    lines.push(row.map(v => {
+      const s = String(v == null ? '' : v);
+      return s.includes(',') ? `"${s}"` : s;
+    }).join(','));
+  }
+
+  const blob = new Blob([lines.join('\r\n')], {type:'text/csv'});
+  const now  = new Date();
+  const ts   = [
+    String(now.getFullYear()),
+    String(now.getMonth()+1).padStart(2,'0'),
+    String(now.getDate()).padStart(2,'0'),
+    '_',
+    String(now.getHours()).padStart(2,'0'),
+    String(now.getMinutes()).padStart(2,'0'),
+    String(now.getSeconds()).padStart(2,'0'),
+  ].join('');
+  const fname = `seds_bphc_log_${ts}.csv`;
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fname;
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  document.getElementById('csv-filename').textContent = fname;
+  csvFilename = fname;
+  toast(`Saved ${csvRows.length} rows → ${fname}`);
+  logCmd(`CSV downloaded: ${fname} (${csvRows.length} rows)`, 'resp');
+}
+
+/* ══════════════════════════════════════════════════════
+   CSV UPLOAD — re-plays a saved log file
+   FIX: back-calculates missionStart from first row's timestamp
+   FIX: guards map removal behind if(map&&...)
+   FIX: stops sim BEFORE clearing buffers
+══════════════════════════════════════════════════════ */
+function uploadCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text  = e.target.result;
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) { toast('CSV empty or malformed'); return; }
+
+    // ── Stop everything BEFORE mutating shared state ──
+    simActive = false;
+    stopSim();
+    document.getElementById('sim-badge').classList.remove('active');
+
+    // Parse header
+    const hdr = lines[0].split(',').map(h=>h.trim().toLowerCase());
+    function idx(name)       { return hdr.indexOf(name); }
+    function fv(parts,name,def=0)  { const i=idx(name); return i>=0 ? (parseFloat(parts[i])||def) : def; }
+    function sv(parts,name,def='') { const i=idx(name); return i>=0 ? (parts[i]||def) : def; }
+
+    // ── Mission time sync: read first data row's timestamp ──
+    // Timestamp format expected: HH:MM:SS
+    let firstRowSec = 0;
+    if (lines.length > 1) {
+      const firstParts = lines[1].split(',').map(p=>p.trim().replace(/^"|"$/g,''));
+      const rawTs = sv(firstParts, 'timestamp', '');
+      const tParts = rawTs.split(':');
+      if (tParts.length === 3) {
+        firstRowSec = (+tParts[0])*3600 + (+tParts[1])*60 + (+tParts[2]);
+      }
+    }
+
+    // Clear all buffers and visual state
+    for (const k of Object.keys(buf)) buf[k].length=0;
+    csvRows=[];
+    csvRecording=false;
+    packetRx=0; packetTx=0; packetErr=0; cansatLink.rx=0;
+    missionStart=null;
+    if (missionTimer) { clearInterval(missionTimer); missionTimer=null; }
+    // FIX: guard map removal with if(map&&...)
+    if (map && mapMarker)   { map.removeLayer(mapMarker);   mapMarker=null; }
+    if (map && mapPolyline) { map.removeLayer(mapPolyline); mapPolyline=null; }
+    mapPath=[];
+
+    // ── Anchor missionStart so timer matches flight data ──
+    // If first row is at 00:05:30, the timer will show 00:05:30 after load
+    missionStart = Date.now() - firstRowSec * 1000;
+    missionTimer = setInterval(()=>{
+      document.getElementById('mission-time').textContent = missionTimeStr();
+    }, 1000);
+
+    let loaded=0, errors=0;
+    for (let i=1; i<lines.length; i++) {
+      try {
+        const parts = lines[i].split(',').map(p=>p.trim().replace(/^"|"$/g,''));
+        if (parts.length < 2 || parts.every(p=>p==='')) continue; // skip blank lines
+        const inoState    = sv(parts,'state','LAUNCH_PAD').toUpperCase();
+        const mappedState = INO_STATE_MAP[inoState] || inoState || 'LAUNCH_PAD';
+        const d = {
+          team:           sv(parts,'team','2026 IN-SPACe-023'),
+          gnss_time:      sv(parts,'gnss_time',''),
+          _rawTimestamp:  sv(parts,'timestamp',''),   // preserve for re-export
+          sats:           Math.round(fv(parts,'sats',0)),
+          packet:         Math.round(fv(parts,'packet',i)),
+          alt:            fv(parts,'alt'),
+          pres:           fv(parts,'pres'),
+          temp:           fv(parts,'temp'),
+          volt:           fv(parts,'volt'),
+          lat:            fv(parts,'lat'),
+          lon:            fv(parts,'lon'),
+          gpsalt:         fv(parts,'gpsalt'),
+          ax:             fv(parts,'accel_x'),  ay:fv(parts,'accel_y'),  az:fv(parts,'accel_z'),
+          gx:             fv(parts,'gyro_x'),   gy:fv(parts,'gyro_y'),   gz:fv(parts,'gyro_z'),
+          aero:   sv(parts,'aero','')==='' ? null : fv(parts,'aero'),
+          source: sv(parts,'source','rocket').toLowerCase()==='cansat' ? 'cansat' : 'rocket',
+          state:          mappedState,
+          cmd:            sv(parts,'cmd',''),
+        };
+        ingestData(d);
+        packetRx++;
+        loaded++;
+      } catch(err) { errors++; }
+    }
+
+    updatePackets();
+    document.getElementById('csv-filename').textContent = file.name;
+    csvFilename = file.name;
+    toast(`Loaded ${file.name} · ${loaded} rows${errors ? ' · '+errors+' skipped' : ''} · T+${String(Math.floor(firstRowSec/3600)).padStart(2,'0')}:${String(Math.floor((firstRowSec%3600)/60)).padStart(2,'0')}:${String(firstRowSec%60).padStart(2,'0')}`);
+    logCmd(`CSV loaded: ${file.name} (${loaded} rows, mission offset ${firstRowSec}s)`, 'resp');
+  };
+
+  reader.readAsText(file);
+  event.target.value=''; // allow re-uploading same file
+}
+
+/* ══════════════════════════════════════════════════════
+   SERIAL LOG
+   FIX: align DOM cap and array cap to same value (200)
+══════════════════════════════════════════════════════ */
+function logSerial(msg, type='resp') {
+  serialLogLines.push({msg, type});
+  if (serialLogLines.length > 200) serialLogLines.shift();
+
+  logCmd(msg, type==='err' ? 'err' : 'resp');
+}
+
+/* ══════════════════════════════════════════════════════
+   COMMAND PROMPT
+══════════════════════════════════════════════════════ */
+function handleCmd(e) {
+  const input = document.getElementById('cmd-input');
+  if (e.key==='Enter') {
+    const cmd = input.value.trim();
+    if (!cmd) return;
+    // Match exact error behaviour of connectSerial when no port is open
+    if (!serialPort || !serialPort.writable) {
+      if (!('serial' in navigator)) {
+        toast('Web Serial not supported — use Chrome/Edge');
+        logCmd('ERR: Web Serial not supported — use Chrome/Edge', 'err');
+      } else {
+        toast('Serial not connected — click CONNECT SERIAL first');
+        logCmd('ERR: Serial not connected — click CONNECT SERIAL first', 'err');
+      }
+      return;
+    }
+    cmdHistory.unshift(cmd); cmdHistIdx=-1;
+    input.value='';
+    sendConsoleCommand(cmd);
+  }
+  if (e.key==='ArrowUp')   { if (cmdHistIdx<cmdHistory.length-1) cmdHistIdx++; input.value=cmdHistory[cmdHistIdx]||''; }
+  if (e.key==='ArrowDown') { if (cmdHistIdx>0) cmdHistIdx--; else { cmdHistIdx=-1; input.value=''; return; } input.value=cmdHistory[cmdHistIdx]||''; }
+}
+
+function logCmd(msg, type='cmd') {
+  const log  = document.getElementById('cmd-log');
+  const line = document.createElement('div');
+  line.className   = type+'-line';
+  line.textContent = msg;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+  while (log.children.length > 100) log.removeChild(log.firstChild);
+}
+
+/* ══════════════════════════════════════════════════════
+   PACKETS
+══════════════════════════════════════════════════════ */
+function updatePackets() {
+  document.getElementById('packets-val').innerHTML =
+    `<span class="p-rx">${packetRx+cansatLink.rx}</span> / <span class="p-tx">${packetTx}</span> / <span class="p-err">${packetErr}</span>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════ */
+let toastTimer=null;
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+/* ══════════════════════════════════════════════════════
+   THEME
+══════════════════════════════════════════════════════ */
+function toggleTheme() {
+  darkMode=!darkMode;
+  document.body.classList.toggle('light-mode');
+  document.getElementById('theme-btn').classList.toggle('active',!darkMode);
+  toast(darkMode?'Dark Mode':'Light Mode');
+}
+
+/* ══════════════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════════════ */
+window.addEventListener('load', () => {
+  initMap();
+  initPlots();
+  setTimeout(() => {
+    for (const p of Object.values(plots)) Plotly.Plots.resize(p.id);
+  }, 100);
+  setPhase('PAD');
+  document.getElementById('sim-badge').classList.remove('active');
+  updateCsvRecIndicator();
+  toast('System online — SEDS BPHC GCS v2.0');
+  updateCameraControls();
+});
+
+window.addEventListener('resize', () => {
+  for (const p of Object.values(plots)) Plotly.Plots.resize(p.id);
+  if (map) map.invalidateSize();
+});
+</script>
+</body>
+</html>

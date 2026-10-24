@@ -3,6 +3,11 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#if defined(ARDUINO)
+#include <Arduino.h>
+#include <Servo.h>
+#include <util/atomic.h>
+#endif
 
 // ROCKET SERVO CONFIGURATION (microseconds).
 // User confirmed PWM4 is a continuous-rotation MG995: pulses control speed,
@@ -15,7 +20,7 @@
 // linkage, supply and 3.3 V signal compatibility on the actual hardware.
 // Manual commands work now; startup/deployment confirmation is independent per
 // output and remains false until the mechanism's safe/deploy positions are known.
-// Pins 22/23 use independent FlexPWM4 submodules 0/1 on Teensy 4.1.
+// Pins 22/23 remain separate Servo.h channels on Teensy 4.1.
 struct ServoConfig {
   uint8_t pin;
   bool enabled;
@@ -44,6 +49,33 @@ constexpr ServoConfig PWM5_SERVO={23,true,50,1000,2000,1500,1500,false,false,150
 static_assert(PWM4_SERVO.pin!=PWM5_SERVO.pin,"Servo pins must be independent");
 static_assert(!PWM4_SERVO.enabled || PWM4_SERVO.valid(),"Invalid PWM4 configuration");
 static_assert(!PWM5_SERVO.enabled || PWM5_SERVO.valid(),"Invalid PWM5 configuration");
+
+#if defined(ARDUINO)
+// Same output API as servotestting/servotestting.ino, without its console,
+// startup centering or blocking sweeps. Existing commands retain their narrower
+// validated 1000..2000 us limits; the library attachment range is 500..2500 us.
+struct TeensyServoOutput {
+  Servo channels[2];
+  void low(uint8_t pin){
+    if(pin!=PWM4_SERVO.pin && pin!=PWM5_SERVO.pin)return;
+    Servo& servo=channels[pin==PWM4_SERVO.pin?0:1];
+    if(servo.attached())servo.detach();
+    digitalWrite(pin,LOW);pinMode(pin,OUTPUT);
+  }
+  void pulse(const ServoConfig& config,uint16_t us){
+    if(!config.valid() || config.frameHz!=50 || us<config.minUs || us>config.maxUs)return;
+    Servo& servo=channels[config.pin==PWM4_SERVO.pin?0:1];
+    // Teensy's attach() starts at its default 1500 us. Set the requested pulse
+    // before its timer ISR can run, avoiding an unintended first neutral pulse.
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE){
+      if(!servo.attached())servo.attach(config.pin,500,2500);
+      servo.writeMicroseconds(us);
+    }
+  }
+};
+static_assert(PWM4_SERVO.frameHz==50 && PWM5_SERVO.frameHz==50,
+              "Servo.h output requires the existing 50 Hz profile");
+#endif
 
 struct ServoRequest {
   enum Result { ACCEPT, BAD_ARGUMENT, NOT_CONFIGURED, OUT_OF_RANGE };
