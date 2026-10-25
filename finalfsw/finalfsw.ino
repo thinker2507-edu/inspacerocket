@@ -152,6 +152,7 @@ ManualRadioSwitch radioSwitch;
 #include "FlightJournal.h"
 #include "SdFlightLog.h"
 #include "ConsoleCommand.h"
+#include "DescentMonitor.h"
 
 // ---------------- Objects ----------------
 SX1262 radio = new Module(PIN_LORA_NSS, RADIOLIB_NC, PIN_LORA_RST, PIN_LORA_BUSY);
@@ -169,6 +170,7 @@ SdFlightLog sdLog;
 TeensyServoOutput servoOutput;
 ServoControl<TeensyServoOutput> servos(servoOutput,PWM4_SERVO,PWM5_SERVO);
 ServoRadioCommand servoRadio;
+DescentMonitor descentMonitor;
 uint32_t lastRecoveryCheckpointMs=0;
 MissionClock mission;
 bool recoveryDone=false, recoveredMission=false, recoveryHold=false;
@@ -429,12 +431,24 @@ void readIMU() {
 
 void readGPS() {
   while (Serial7.available()) gps.encode(Serial7.read());
+  // Read isUpdated before lat()/lng() consume TinyGPSPlus's update flag.
+  const bool newDescentFix=gps.location.isUpdated() && gps.location.isValid() &&
+    gps.location.age()<=RocketDescent::FIX_MAX_AGE_MS;
   if (gps.location.isValid()) {
     gnssLat = gps.location.lat();
     gnssLon = gps.location.lng();
   }
   if (gps.altitude.isValid())   gnssAlt  = (float)gps.altitude.meters();
   if (gps.satellites.isValid()) gnssSats = (uint8_t)gps.satellites.value();
+  if(newDescentFix && gps.satellites.isValid() &&
+     gps.satellites.age()<=RocketDescent::FIX_MAX_AGE_MS){
+    bool hasVelocity=gps.speed.isValid() && gps.course.isValid() &&
+      gps.speed.age()<=RocketDescent::FIX_MAX_AGE_MS && gps.course.age()<=RocketDescent::FIX_MAX_AGE_MS;
+    const float speed=hasVelocity?float(gps.speed.mps()):0;
+    const float course=hasVelocity?float(gps.course.deg())*RocketDescent::GYRO_TO_RADS:0;
+    descentMonitor.observeFix(gnssLat,gnssLon,gnssSats,millis()-gps.location.age(),
+                              hasVelocity,speed*sinf(course),speed*cosf(course));
+  }
   gnssTimeFresh = gps.time.isValid() && gps.time.age() < 2000;
   if (gnssTimeFresh) {
     snprintf(gnssTime, sizeof(gnssTime), "%02u:%02u:%02u",
@@ -1119,6 +1133,7 @@ const char* executeCommand(const char* name, const char* arg, char* info, size_t
   }
 
   if (!strcmp(name, "STATUS")) {
+    if(!strcmp(arg,"DESCENT")){descentMonitor.status(info,infoLen);return "OK";}
     if(!strcmp(arg,"RADIO")){
       snprintf(info,infoLen,"RADIO_CHANNEL=%s;MHZ=%.2f;SF=%u;SYNC=0x%02X;PENDING=%u",radioChannelName(radioSwitch.current),radioChannelMHz(radioSwitch.current),LORA_SF,LORA_SYNC_WORD,radioSwitch.pending);return "OK";
     }
@@ -1939,4 +1954,10 @@ void loop() {
     case ST_LANDED:
       break; // terminal until explicit ARM or RESETPAD; reboot restores mission
   }
+  // Calculation-only reference integration; never writes PWM or changes flight state.
+  descentMonitor.service(now,missionId,calibration.generation,uint8_t(state),mission.launched,
+    recoveredMission,recoveryDone && !recoveryHold && !calibrationPending,
+    baroReferenceReady && flightDataFresh,vertical.baroHeight,
+    imuFresh && gyroValid && uint32_t(now-gyroMs)<=100,
+    gx,gy,gz,gravityX,gravityY,gravityZ);
 }
