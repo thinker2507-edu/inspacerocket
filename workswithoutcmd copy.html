@@ -397,7 +397,26 @@
 /* ══════════════════════════════════════════════════════
    CONFIG
 ══════════════════════════════════════════════════════ */
-const VEHICLE = Object.freeze({ID:'R',NAME:'ROCKET',SOURCE:1,ADDRESS:'23:R'});
+let VEHICLE = Object.freeze({ID:'R',NAME:'ROCKET',SOURCE:1,ADDRESS:'23:R'});
+const vehiclePhases = {'23:R':null,'23:C':null};
+
+async function selectCommandTarget(name) {
+  const id={ROCKET:'R',R:'R',CANSAT:'C',C:'C'}[name];
+  if(!id){logCmd('Use TARGET ROCKET or TARGET CANSAT.','err');return false;}
+  if(cameraPending || simActive){logCmd('Wait for the pending command and stop replay before changing target.','err');return false;}
+  if(VEHICLE.ID===id){noteVehiclePacket('target selected',VEHICLE.ADDRESS);return true;}
+  VEHICLE=Object.freeze({ID:id,NAME:id==='R'?'ROCKET':'CANSAT',SOURCE:id==='R'?1:2,ADDRESS:'23:'+id});
+  telemetryRequested=null;telemetryLastConfirmed=null;onboardMission=null;
+  applyTelemetryState(null);
+  document.getElementById('command-status').textContent='Commands: '+VEHICLE.NAME+'; state UNKNOWN until addressed STATUS reply.';
+  PHASE_IDS.forEach(key=>document.getElementById(key).className='phase-dot');
+  currentPhase='UNKNOWN';
+  if(vehiclePhases[VEHICLE.ADDRESS])setPhase(vehiclePhases[VEHICLE.ADDRESS]);
+  updateCameraControls();
+  noteVehiclePacket('target selected',VEHICLE.ADDRESS);
+  if(cameraSerialReady && serialPort && serialPort.writable)return sendFlightCommand('STATUS');
+  return true;
+}
 let lastVehiclePacket=0, lastCounterEpoch=0;
 const cansatLink={lastPacket:0,epoch:0,rx:0,synthetic:false};
 const receivedLinks={'23:R':null,'23:C':null};
@@ -445,6 +464,7 @@ function sendConsoleCommand(text) {
   const m=/^([A-Za-z][A-Za-z0-9_]*)(?:(?:\s*,\s*|\s+)([^\s,*$]+))?$/.exec(text);
   if(!m){logCmd('Use NAME,arg or NAME arg; only one argument.','err');return false;}
   let name=m[1].toUpperCase(),arg=m[2]==null?undefined:m[2].toUpperCase();
+  if(name==='TARGET')return selectCommandTarget(arg);
   if(name==='TELEM' && (arg==='ON' || arg==='OFF'))arg=arg==='ON'?'1':'0';
   if(name==='COUNT' && arg==null){name='STATUS';arg='COUNTER';}
   if(name==='GROUND')return sendReceiverRadioCommand(arg);
@@ -462,13 +482,15 @@ function updateCameraControls() {
   const ready = cameraSerialReady && !!(serialPort && serialPort.writable) && !simActive && !cameraPending;
   for (const action of ['start', 'stop']) {
     const button = document.getElementById('cam-record-' + action);
-    button.disabled = !ready;
+    button.disabled = !ready || VEHICLE.ID!=='R';
     button.classList.toggle('active', cameraSelection === action);
     button.setAttribute('aria-pressed', String(cameraSelection === action));
   }
   for(const id of ['btn-telemetry','btn-calibrate','btn-set-time','btn-arm','btn-reset-pad'])
     document.getElementById(id).disabled=id==='btn-telemetry' && simActive?false:
-      !ready || (id==='btn-telemetry' && typeof telemetryOn!=='boolean');
+      !ready;
+  const cameraPanel=document.getElementById('cam-record-start').parentElement;
+  if(cameraPanel)cameraPanel.hidden=VEHICLE.ID!=='R';
 }
 
 function finishDelivery(pending, message, success = false) {
@@ -496,7 +518,7 @@ function handleBridgeStatus(raw) {
 
 function cameraConnectionLost() {
   cameraSerialReady = false;
-  document.getElementById('vehicle-status').textContent='ROCKET / CANSAT: serial disconnected | Commands: ROCKET';
+  document.getElementById('vehicle-status').textContent='ROCKET / CANSAT: serial disconnected | Commands: '+VEHICLE.NAME;
   applyTelemetryState(null);
   if (cameraPending) {
     const pending = cameraPending;
@@ -507,6 +529,13 @@ function cameraConnectionLost() {
 }
 
 async function sendFlightCommand(name, arg, action = null, onSuccess = null, explicitSequence = null) {
+  if(VEHICLE.ID==='C' && (['CAM','CAMPWR','PWM4','PWM5'].includes(name) ||
+     (name==='STATUS' && ['CAMERA','SERVO','DESCENT'].includes(arg)))){
+    logCmd('Rocket-only command blocked for CanSat; nothing sent.','err');return false;
+  }
+  if(VEHICLE.ID==='R' && name==='STATUS' && ['PSMS','SPI','RTC'].includes(arg)){
+    logCmd('CanSat-only status query; use TARGET CANSAT first.','err');return false;
+  }
   if(!/^[A-Z][A-Z0-9_]*$/.test(name) || (arg!=null && (!/^[!-~]+$/.test(String(arg)) || /[,*$]/.test(String(arg))))) {
     document.getElementById('command-status').textContent='Invalid command name/argument; nothing sent.';
     return false;
@@ -544,6 +573,7 @@ async function sendFlightCommand(name, arg, action = null, onSuccess = null, exp
 }
 
 async function sendCameraAction(action) {
+  if(VEHICLE.ID!=='R')return false;
   if (action !== 'start' && action !== 'stop') return false;
   cameraSelection = action;
   cameraRequestState = action === 'start' ? 'START REQUESTED' : 'STOP REQUESTED';
@@ -558,7 +588,7 @@ function handleCameraAck(raw) {
       match[2] !== VEHICLE.ADDRESS || Number(match[3]) > 0xFFFFFFFF) {
     logCmd('Invalid ACK ignored', 'err'); return true;
   }
-  noteVehiclePacket('ACK');
+  noteVehiclePacket('ACK',match[2]);
   if (!cameraPending || Number(match[3]) !== cameraPending.seq) {
     logCmd('Unmatched/late ACK: ' + raw, 'resp'); return true;
   }
@@ -632,7 +662,7 @@ let serialReadTask = null;
 let serialClosing = false;
 let simActive    = false;
 let simInterval  = null;
-let telemetryOn  = null; // unknown until an actual STATUS/TELEM ACK or SYS heartbeat
+let telemetryOn  = null; // unknown until an actual STATUS/TELEM ACK
 let telemetryRequested = null, telemetryLastConfirmed = null;
 let lastRocketPacketMs=0,lastRocketAltitude=NaN,rocketStaleMs=3000;
 let missionStart = null;
@@ -925,7 +955,7 @@ function noteVehiclePacket(kind,address='23:R') {
   receivedLinks[address]=`${kind} at ${new Date().toLocaleTimeString()}`;
   document.getElementById('vehicle-status').textContent=
     `ROCKET: ${receivedLinks['23:R'] || 'waiting'} | CANSAT: ${receivedLinks['23:C'] || 'waiting'}`+
-    (cansatLink.synthetic?' [SYNTHETIC TEST]':'')+' | Commands: ROCKET';
+    (cansatLink.synthetic?' [SYNTHETIC TEST]':'')+' | Commands: '+VEHICLE.NAME+' (TARGET ROCKET / TARGET CANSAT)';
 }
 function acceptCounterEpoch(epoch,address='23:R') {
   if(address==='23:C'){
@@ -1019,6 +1049,8 @@ function parsePacket(raw) {
     if(isCansat){cansatLink.lastPacket=d.packet;cansatLink.synthetic=optParts.includes('FAKE=1');}
     else lastVehiclePacket=d.packet;
     noteVehiclePacket('telemetry #'+d.packet+' / epoch '+counterEpoch,parts[0]);
+    vehiclePhases[parts[0]]=d.state;
+    if(parts[0]===VEHICLE.ADDRESS)setPhase(d.state);
     if(missionStart===null)missionStart=Date.now();
     startMissionTimer();
     document.getElementById('mission-time').textContent=missionTimeStr();
@@ -1087,7 +1119,7 @@ function ingestRocket(d) {
   document.getElementById('t-lon').textContent  = d.lon.toFixed(4);
   document.getElementById('t-galt').textContent = d.gpsalt.toFixed(2);
 
-  if (d.state) setPhase(d.state.toUpperCase());
+  if (d.state && VEHICLE.ID==='R') setPhase(d.state.toUpperCase());
   updateMap(d.lat, d.lon);
 
   const safe = (name, fn) => { try { fn(); } catch(e) { logSerial(`Plot ${name}: ${e.message}`, 'err'); console.error(name, e); } };
@@ -1288,7 +1320,7 @@ function handleSystemPacket(raw) {
      (p.length>=15 && !/^[01]$/.test(p[14])) || (p.length>=16 && !/^[0-5]$/.test(p[15])))return true;
   if(!acceptCounterEpoch(p.length===17 && /^\d+$/.test(p[16])?Number(p[16]):p.length===17?NaN:0,p[1]))return true;
   noteVehiclePacket('SYS',p[1]);
-  if(p[1]==='23:C')return true; // peer health never changes rocket command/mission state
+  if(p[1]!==VEHICLE.ADDRESS)return true; // peer health never changes selected command/mission state
   onboardMission={id:Number(p[2]),quality,elapsed,recovery:Number(p[5]),received:Date.now()};
   if(p.length>=15 && (!cameraPending || cameraPending.name!=='TELEM')){
     applyTelemetryState(p[14]==='1');updateCameraControls();
@@ -1351,8 +1383,7 @@ function renderTelemetryStatus() {
 
 async function toggleTelemetry() {
   if(simActive){applyTelemetryState(telemetryOn!==true);return;}
-  if(typeof telemetryOn!=='boolean'){toast('Waiting for firmware telemetry status.');return false;}
-  const next = !telemetryOn;
+  const next = telemetryOn!==true; // UNKNOWN explicitly requests ON; never assumes success.
   return sendFlightCommand('TELEM', next ? '1' : '0'); // update only from returned state
 }
 
