@@ -1,0 +1,65 @@
+{
+    "status":  "PASS: ten focused software/documentation suites and installed firmware/object checks. No physical hardware validation; existing compiler/runtime environment warnings remain.",
+    "checks":  [
+                   {
+                       "command":  "node tests/command-phase-policy.test.cjs",
+                       "result":  "PASS: actual CAL/REBOOT bodies allow nonPAD; stale-data and busy failures retained.",
+                       "log":  "verification_results/handoff-command-phase-policy.test.cjs.log"
+                   },
+                   {
+                       "command":  "node tests/remote-counter.test.cjs",
+                       "result":  "PASS: both flight handlers/durable epoch/timeout/reply cache and actual selected GCS frames/ACKs.",
+                       "log":  "verification_results/handoff-remote-counter.test.cjs.log"
+                   },
+                   {
+                       "command":  "node tests/telemetry-check.cjs",
+                       "result":  "PASS:30s OFF has zero routine TX; ACK survives; ON resumes; explicit OFF allowed in recovery/flight.",
+                       "log":  "verification_results/handoff-telemetry-check.cjs.log"
+                   },
+                   {
+                       "command":  "node tests/usb-command-path.cjs",
+                       "result":  "PASS: real GCS frames/actual dispatch/reply, authentication, duplicate suppression, asynchronous completion.",
+                       "log":  "verification_results/handoff-usb-command-path.cjs.log"
+                   },
+                   {
+                       "command":  "node tests/targets-check.cjs",
+                       "result":  "PASS: target isolation/shared GCS/source pin/storage guards.",
+                       "log":  "verification_results/handoff-targets-check.cjs.log"
+                   },
+                   {
+                       "command":  "node tests/cansat-parachute.test.cjs",
+                       "result":  "PASS: actual hand-lift handler retains execution requirements and bench mode.",
+                       "log":  "verification_results/handoff-cansat-parachute.test.cjs.log"
+                   },
+                   {
+                       "command":  "node tests/servo.test.cjs",
+                       "result":  "PASS: existing servo console/snippet/ACK routing and documented handler inventory.",
+                       "log":  "verification_results/handoff-servo.test.cjs.log"
+                   },
+                   {
+                       "command":  "node tests/gcs-cansat-plots.test.cjs",
+                       "result":  "PASS: real CanSat packet/parser/Plotly data arrays use correct time axis, including interleaving and invalid gaps.",
+                       "log":  "verification_results/handoff-gcs-cansat-plots.test.cjs.log"
+                   },
+                   {
+                       "command":  "node tests/cansat-erase.test.cjs",
+                       "result":  "PASS: original USB-only erase/protection/full verification/no-retry behavior remains.",
+                       "log":  "verification_results/handoff-cansat-erase.test.cjs.log"
+                   },
+                   {
+                       "command":  "powershell -File cansatfswfinal/check.ps1",
+                       "result":  "PASS: ESP32 flight0/flash-disabled/bench1 objects; MPU dependency; actual C++ journal/600m/one-shot assertions.",
+                       "log":  "verification_results/handoff-cansat-build.log"
+                   },
+                   {
+                       "command":  "powershell -File verification_results/descent-build.ps1",
+                       "result":  "PASS: rocket/legacy CanSat/Servo/PCB bench ARM objects, journal/parser assertions, receiver syntax. No linked firmware image.",
+                       "log":  "verification_results/handoff-rocket-build.log"
+                   },
+                   {
+                       "command":  "node tests/handoff-doc.test.cjs",
+                       "result":  "PASS:41 command families, source-linked reasons, source hashes/links/anchors, offline JS and search filters; no hardware API.",
+                       "log":  "verification_results/handoff-doc-check.log"
+                   }
+               ]
+}

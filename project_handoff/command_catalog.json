@@ -1,0 +1,289 @@
+[
+  {
+    "scope": "Shared",
+    "command": "HELP",
+    "effect": "List implemented flight commands.",
+    "requirements": "Help/status/ping remain accessible during pending operations.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "PING",
+    "effect": "Read command RSSI/SNR; USB_OK if radio unavailable.",
+    "requirements": "ACK is not proof of physical hardware behavior.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "STATUS",
+    "effect": "Read numeric state, TX, sensors, reference/calibration and sequence status.",
+    "requirements": "Unknown STATUS subtype falls back to summary; it is not another supported query.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "STATUS LINK",
+    "effect": "Read radio/RX/TX flags and build marker.",
+    "requirements": "RADIO=1 means initialized, not confirmed RF delivery.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "STATUS IMU",
+    "effect": "Read model, freshness and errors.",
+    "requirements": "Rocket BNO08x; CanSat MPU6500-compatible library at0x69.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "STATUS SD",
+    "effect": "Read availability/file/write/drop/slow-operation counters.",
+    "requirements": "CanSat ESP32 has no SD; MISSING is expected.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "STATUS RADIO",
+    "effect": "Read channel/frequency/SF/sync/pending switch.",
+    "requirements": "Receiver and addressed vehicle must share a channel.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "STATUS COUNTER / COUNT",
+    "effect": "Read packet/next/high/epoch/TX/store blockers.",
+    "requirements": "COUNT is a console alias; command sequence and telemetry counter are separate.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "STATUS FLASH",
+    "effect": "Read JEDEC, journal state and16 header bytes.",
+    "requirements": "Read-only, does not erase/repair. Read errors remain possible.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "STATUS MISSION",
+    "effect": "Read mission ID/time quality/elapsed/recovery/storage/arming.",
+    "requirements": "Uncertain recovered time is NA, not a fabricated timestamp.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "STATUS INA",
+    "effect": "Read voltage/shunt/current/power and validity.",
+    "requirements": "Invalid values remain explicit.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "TELEM ON / TELEM OFF",
+    "effect": "Enable/disable routine LoRa telemetry, including in flight.",
+    "requirements": "OFF preserves RX/ACK, sensors, flight logic, logs and timing. Real pending operations may be busy. Existing launch transition can force ON.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "RATE <400..10000>",
+    "effect": "Set telemetry period, milliseconds.",
+    "requirements": "Unsigned decimal in range; sensor/flight-loop rate unchanged.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "CAL BARO / GYRO / ACCEL / ALL",
+    "effect": "Start3s calibration; await DONE/FAIL. BARO sets pressure reference; GYRO biases; ACCEL vertical bias.",
+    "requirements": "PAD gate removed. Fresh valid IMU/pressure, stillness, sufficient samples, reference ordering and storage application still required. It can reset reference/filter if deliberately used in flight.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "TIME <1700000000..4102444799>",
+    "effect": "Set/verify UTC Unix seconds on RTC.",
+    "requirements": "No active-flight phase lock; RTC must exist, recovery must finish, value and readback must be valid.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "RADIO MAIN / RADIO BACKUP",
+    "effect": "Coordinated vehicle/receiver retune; await DONE.",
+    "requirements": "MAIN865.50MHz/BACKUP867.25MHz. SF7/sync0x95 unchanged. Actual radio/busy/pending-switch failures remain.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "ARM / ARM CONFIRM",
+    "effect": "Initialize unstarted mission. Already active returns MISSION_ALREADY_ACTIVE without resetting.",
+    "requirements": "PAD/LANDED phase gate removed. Fresh stationary IMU, baro reference, known counter, healthy storage and no conflicting operation remain. Recovery hold needs CONFIRM; bench1 cannot ARM. Rocket recording must be stopped first.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "RESETPAD CONFIRM",
+    "effect": "Commit new unarmed PAD mission; keep logs/calibration/counter history.",
+    "requirements": "Phase/active-flight gate removed. CONFIRM, idle healthy journal, mission-ID room and no conflicting operation remain. Can reset flight detection/automatic-action state while airborne.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "REBOOT",
+    "effect": "ACK then software reset after bounded storage drain.",
+    "requirements": "PAD/unarmed gate removed. Recovery must finish; pending camera/calibration must finish. Unsynced SD rows can be lost after drain deadline.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "COUNTER <last_used_upper_bound>",
+    "effect": "One-time legacy packet-number migration.",
+    "requirements": "Only when baseline is missing. Nonzero unsigned floor must cover stored high bound and be below UINT32_MAX; does not reset a healthy managed counter.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Shared",
+    "command": "RESETCOUNT CONFIRM",
+    "effect": "Remote selected-vehicle counter reset with durable new epoch.",
+    "requirements": "First TELEM OFF. Requires known counter, completed recovery, idle healthy journal/radio, no conflicting transaction. Wait for PERSISTING then DONE. Mission/logs/calibration unchanged. First packet1 after ON/new reservation.",
+    "source": "finalfsw/finalfsw.ino; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Rocket",
+    "command": "CAM 1 / CAM 0",
+    "effect": "Request recording start/stop via Serial5.",
+    "requirements": "Both send experimental CC0101E7 once; not verified recording-specific camera feedback. Camera transaction/storage/UART failures remain. Start after LANDED no longer requires a new mission; old landing timer will not immediately toggle a late manual start.",
+    "source": "finalfsw/finalfsw.ino"
+  },
+  {
+    "scope": "Rocket",
+    "command": "CAMPWR",
+    "effect": "Send camera power-button packet once.",
+    "requirements": "No launched-only gate. Recording/camera-busy/recovery checks remain. No verified explicit power-off sequence.",
+    "source": "finalfsw/finalfsw.ino"
+  },
+  {
+    "scope": "Rocket",
+    "command": "STATUS CAMERA",
+    "effect": "Read request/UART/firmware-ACK/landing-stop flags.",
+    "requirements": "Physical camera state unknown.",
+    "source": "finalfsw/finalfsw.ino"
+  },
+  {
+    "scope": "Rocket",
+    "command": "PWM4 <0..270deg | 500..2500us>",
+    "effect": "Rocket servo pin22.",
+    "requirements": "Manual-anytime. Nominal500..2500us spans user-reported270deg MG996R. Automatic linkage unconfigured.",
+    "source": "finalfsw/finalfsw.ino"
+  },
+  {
+    "scope": "Rocket",
+    "command": "PWM5 <0..270deg | 500..2500us>",
+    "effect": "Rocket servo pin23.",
+    "requirements": "Manual-anytime. Automatic stow0/deploy90 enabled at existing durable APOGEE-to-DESCENT event.",
+    "source": "finalfsw/finalfsw.ino"
+  },
+  {
+    "scope": "Rocket",
+    "command": "PWM4/PWM5 TEST90 / SAFE",
+    "effect": "TEST90=90deg; SAFE=configured target.",
+    "requirements": "PWM4 SAFE90/1167us; PWM5 SAFE0/500us. SPIN/STOP/REVERSE no longer valid for positional servos.",
+    "source": "finalfsw/finalfsw.ino"
+  },
+  {
+    "scope": "Rocket",
+    "command": "STATUS SERVO",
+    "effect": "Read outputs, commanded pulses, automatic status/intent.",
+    "requirements": "No position feedback.",
+    "source": "finalfsw/finalfsw.ino"
+  },
+  {
+    "scope": "Rocket",
+    "command": "STATUS DESCENT",
+    "effect": "Read monitor-only guidance diagnostics.",
+    "requirements": "No steering outputs; linkage unverified.",
+    "source": "finalfsw/finalfsw.ino"
+  },
+  {
+    "scope": "CanSat",
+    "command": "PWM25 <0..270deg | 500..2500us> / OFF",
+    "effect": "CanSat MG996R GPIO25; OFF detaches/lowers signal.",
+    "requirements": "Manual-anytime, either code mode. Cancels waiting hand-lift test; no mission/automatic-latch reset. OFF is not a position.",
+    "source": "cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "CanSat",
+    "command": "STATUS PARACHUTE",
+    "effect": "Read AT600, DEG90/US1167, mode, auto/test/output flags.",
+    "requirements": "FEEDBACK=NONE; OUT is commanded pulse, not measured angle.",
+    "source": "cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "CanSat",
+    "command": "PARACHUTE TEST / CANCEL",
+    "effect": "Arm/cancel hand-lift detector:2m rise, >1m peak drop,5 fresh samples.",
+    "requirements": "Bench flag1 required (current0). No explicit PAD gate; recovered unarmed/never-launched mission, good storage/reference and idle operations still required. CANCEL leaves PWM unchanged.",
+    "source": "cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "CanSat",
+    "command": "STATUS RTC",
+    "effect": "Read presence/validity/trust/advancing/oscillator/read status.",
+    "requirements": "I2C ACK does not establish valid UTC. Set time after oscillator-stop.",
+    "source": "cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "CanSat",
+    "command": "STATUS SPI",
+    "effect": "Read SPI pins, cached flash JEDEC and initialized flags.",
+    "requirements": "Does not prove journal health or RF delivery.",
+    "source": "cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "CanSat",
+    "command": "STATUS PSMS",
+    "effect": "Read PMS5003 status and valid atmospheric PM1/PM2.5/PM10.",
+    "requirements": "ug/m3 only when valid; warmup/stale/frame faults are explicit.",
+    "source": "cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "GCS only",
+    "command": "TARGET ROCKET / TARGET CANSAT",
+    "effect": "Select destination; Control dropdown does the same.",
+    "requirements": "Both telemetry streams visible; one addressed command, no broadcast. Wait for pending request.",
+    "source": "workswithoutcmd copy.html"
+  },
+  {
+    "scope": "Ground",
+    "command": "GROUND MAIN / BACKUP / STATUS",
+    "effect": "Retune/query receiver only.",
+    "requirements": "No vehicle command. Receiver USB: @RADIO MAIN/BACKUP/STATUS.",
+    "source": "workswithoutcmd copy.html; inspacelora/lora_rx/lora_rx.ino"
+  },
+  {
+    "scope": "CanSat USB only",
+    "command": "ERASEFLASH CONFIRM / STATUS",
+    "effect": "Full8MiB factory erase/verify/reboot or inspect progress.",
+    "requirements": "Direct CanSat USB first60s only, recovered unarmed PAD/completed mission, telemetryOFF and idle. Deletes all mission/counter/calibration history. No remote erase authorized.",
+    "source": "cansatfswfinal/BootFlashErase.h; cansatfswfinal/cansatfswfinal.ino"
+  },
+  {
+    "scope": "Bench only",
+    "command": "datafakecansat: ON / OFF / STATUS / BACKOFF ON / BACKOFF OFF / FLIGHT / RESETPAD CONFIRM / REBOOT",
+    "effect": "Operate synthetic interference-test packets.",
+    "requirements": "Not production commands; do not mix synthetic23:C stream with real CanSat.",
+    "source": "datafakecansat/datafakecansat.ino"
+  },
+  {
+    "scope": "Bench only",
+    "command": "rocket_pcb_servo_test: 0..270 / u500..u2500 / c / l / r / s / f / d / a / ?",
+    "effect": "Standalone Teensy servo test pin22(edit23).",
+    "requirements": "s/f sweeps0..180; direct targets270. Startup moves90. Restore production after bench test.",
+    "source": "rocket_pcb_servo_test/rocket_pcb_servo_test.ino"
+  },
+  {
+    "scope": "Bench only",
+    "command": "cansat_test_codes / I2C finder sketches",
+    "effect": "Automatic diagnostics, no production command console.",
+    "requirements": "Use sketch-specific wiring/readme then restore production.",
+    "source": "cansat_test_codes/README.md; cansat_i2c_finder/README.md; cansat_rtc_i2c_finder/README.md"
+  }
+]

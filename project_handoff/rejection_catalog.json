@@ -1,0 +1,1870 @@
+{
+  "layers": [
+    [
+      "GCS will not send",
+      "Disconnected/no writable port; replay active; request pending; wrong selected vehicle; malformed name/argument/raw envelope/key/checksum/sequence; frame>99bytes; unsupported receiver channel. One flight request at a time."
+    ],
+    [
+      "Receiver discards or waits",
+      "LF-terminated addressed $CMD needed. CR/control/non-ASCII, invalid identity/checksum/fields, >99bytes or partial line>1s discarded. Waits for addressed RX window or1200ms fallback; incoming RF header may defer. Radio TX/RX API errors are not execution success."
+    ],
+    [
+      "Firmware silent validation drops",
+      "Requires $CMD, canonical decimal team:R/C,4or5 commas with no empty fields, printable non-space ASCII, no embedded $/*, final*HH/XOR, correct vehicle/team and decimal32-bit sequence. RF CRC/read errors, TX/not-listening or pending ACK can prevent receipt."
+    ],
+    [
+      "Authentication / duplicates",
+      "Wrong key can ACK AUTH_KEY. Same latest sequence repeats cached ACK without action. Older remembered duplicate ACKs DELAYED_DUPLICATE. A pending ACK serializes reception."
+    ],
+    [
+      "Real execution failures",
+      "Invalid arguments/ranges, absent hardware, stale/unreliable IMU, motion/pressure instability, insufficient samples, bad/foreign/full flash, failed write/readback, busy operations, exhausted IDs/counters, unsupported MCU/disabled feature. PAD-only gates are removed, not these facts."
+    ],
+    [
+      "Async completion",
+      "CAL, RADIO, camera persistence, RESETPAD, RESETCOUNT can accept then DONE/FAIL. OK need not mean completed. Timeout/lost ACK means unknown outcome; no automatic retries."
+    ],
+    [
+      "GCS rejects a reply or packet",
+      "Wrong/corrupt/unmatched/late ACK address/checksum/status/sequence cannot confirm request. Telemetry additionally rejects invalid16-field schema/source/state/epoch, unknown address and duplicate/delayed counters. Telemetry rejection differs from command rejection."
+    ],
+    [
+      "USB erase failures",
+      "Window closed; attempt locked; unsafe/non-idle maintenance state; absent/wrong/busy/protected chip or WEL refusal;120s timeout; read failure/non-FF verification. Correct JEDEC is not a valid journal."
+    ],
+    [
+      "Physical delivery failures",
+      "Wrong frequency/SF/sync, antenna/power/wiring, RF collision, reboot or hardware fault can lose request/reply. A CanSat ACK does not establish the rocket link. Timeout is not a NACK or proof of a particular physical cause."
+    ]
+  ],
+  "diagnostics": [
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1130,
+      "code": "RADIO_SWITCH_PENDING",
+      "kind": "REJECT",
+      "context": "  if(radioSwitch.pending && strcmp(name,\"STATUS\") && strcmp(name,\"PING\") && strcmp(name,\"HELP\")){\n    snprintf(info,infoLen,\"RADIO_SWITCH_PENDING\");return \"REJECT\";\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1133,
+      "code": "REBOOT_PENDING",
+      "kind": "REJECT",
+      "context": "  if(rebootPending && strcmp(name,\"STATUS\") && strcmp(name,\"PING\") && strcmp(name,\"HELP\") && strcmp(name,\"REBOOT\")){\n    snprintf(info,infoLen,\"REBOOT_PENDING\");return \"REJECT\";\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1136,
+      "code": "PAD_RESET_PENDING",
+      "kind": "REJECT",
+      "context": "  if((padResetToken || padResetResultPending) && strcmp(name,\"STATUS\") && strcmp(name,\"PING\") && strcmp(name,\"HELP\")){\n    snprintf(info,infoLen,\"PAD_RESET_PENDING\");return \"REJECT\";\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1140,
+      "code": "COUNTER_RESET_PENDING",
+      "kind": "REJECT",
+      "context": "     (strcmp(name,\"TELEM\") || strcmp(arg,\"0\"))){\n    snprintf(info,infoLen,\"COUNTER_RESET_PENDING\");return \"REJECT\";\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1172,
+      "code": "FLASH_READ_UNAVAILABLE;STORE=%u",
+      "kind": "ERR",
+      "context": "      if(!flashHardware.read(address,bytes,sizeof(bytes))){\n        snprintf(info,infoLen,\"FLASH_READ_UNAVAILABLE;STORE=%u\",unsigned(journal.status));return \"ERR\";\n      }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1237,
+      "code": "ARG",
+      "kind": "ERR",
+      "context": "    }\n    snprintf(info, infoLen, \"ARG\");\n    return \"ERR\";"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1242,
+      "code": "ARG_UNSIGNED_MS",
+      "kind": "ERR",
+      "context": "  if (!strcmp(name, \"RATE\")) {\n    if(!decimalU32(arg)){snprintf(info,infoLen,\"ARG_UNSIGNED_MS\");return \"ERR\";}\n    long v = atol(arg);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1244,
+      "code": "RANGE_%d_%d",
+      "kind": "ERR",
+      "context": "    long v = atol(arg);\n    if (v < RATE_MIN_MS || v > RATE_MAX_MS) { snprintf(info, infoLen, \"RANGE_%d_%d\", RATE_MIN_MS, RATE_MAX_MS); return \"ERR\"; }\n    telemetryPeriodMs = (uint32_t)v;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1251,
+      "code": "CAM_DISABLED",
+      "kind": "ERR",
+      "context": "  if (!strcmp(name, \"CAM\")) {\n    if (!USE_RUNCAM) { snprintf(info, infoLen, \"CAM_DISABLED\"); return \"ERR\"; }\n    if (strcmp(arg, \"1\") && strcmp(arg, \"0\")) { snprintf(info, infoLen, \"ARG\"); return \"ERR\"; }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1252,
+      "code": "ARG",
+      "kind": "ERR",
+      "context": "    if (!USE_RUNCAM) { snprintf(info, infoLen, \"CAM_DISABLED\"); return \"ERR\"; }\n    if (strcmp(arg, \"1\") && strcmp(arg, \"0\")) { snprintf(info, infoLen, \"ARG\"); return \"ERR\"; }\n    bool start = !strcmp(arg, \"1\");"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1254,
+      "code": "CAM_BUSY",
+      "kind": "REJECT",
+      "context": "    bool start = !strcmp(arg, \"1\");\n    if(cameraQueued || cameraResultPending){snprintf(info,infoLen,\"CAM_BUSY\");return \"REJECT\";}\n    if(!recoveryDone || (!journal.usable() && mission.launched)){"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1256,
+      "code": "CAM_RECOVERY_OR_STORAGE_HOLD",
+      "kind": "REJECT",
+      "context": "    if(!recoveryDone || (!journal.usable() && mission.launched)){\n      snprintf(info,infoLen,\"CAM_RECOVERY_OR_STORAGE_HOLD\");return \"REJECT\";\n    }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1273,
+      "code": "CAM_STORAGE_FAILED",
+      "kind": "FAIL",
+      "context": "        autoStopStatus=priorAuto;\n        snprintf(info,infoLen,\"CAM_STORAGE_FAILED\");return \"FAIL\";\n      }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1281,
+      "code": "CAM_UART_FAILED_OR_DISABLED",
+      "kind": "FAIL",
+      "context": "      if (!start) autoStopStatus = AUTO_FAILED;\n      snprintf(info, infoLen, \"CAM_UART_FAILED_OR_DISABLED\"); return \"FAIL\";\n    }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1291,
+      "code": "ARG",
+      "kind": "ERR",
+      "context": "  if (!strcmp(name, \"CAMPWR\")) {\n    if (*arg) { snprintf(info, infoLen, \"ARG\"); return \"ERR\"; }\n    if (camRecording || cameraQueued || cameraResultPending || !recoveryDone) { snprintf(info, infoLen, \"CAM_RECORDING_REQUEST_ACTIVE\"); return \"REJECT\"; }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1292,
+      "code": "CAM_RECORDING_REQUEST_ACTIVE",
+      "kind": "REJECT",
+      "context": "    if (*arg) { snprintf(info, infoLen, \"ARG\"); return \"ERR\"; }\n    if (camRecording || cameraQueued || cameraResultPending || !recoveryDone) { snprintf(info, infoLen, \"CAM_RECORDING_REQUEST_ACTIVE\"); return \"REJECT\"; }\n    logEvent(LOG_CAM_INTENT,seq);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1294,
+      "code": "CAM_UART_FAILED_OR_DISABLED",
+      "kind": "FAIL",
+      "context": "    logEvent(LOG_CAM_INTENT,seq);\n    if (!camPowerButton()) { snprintf(info, infoLen, \"CAM_UART_FAILED_OR_DISABLED\"); return \"FAIL\"; }\n    logEvent(LOG_CAM_RESULT,seq);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1302,
+      "code": "ARG_MAIN_OR_BACKUP",
+      "kind": "ERR",
+      "context": "    RadioChannel channel=radioChannel(arg);\n    if(channel==RadioChannel::INVALID){snprintf(info,infoLen,\"ARG_MAIN_OR_BACKUP\");return \"ERR\";}\n    if(!radioReady){snprintf(info,infoLen,\"RADIO_UNAVAILABLE\");return \"ERR\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1303,
+      "code": "RADIO_UNAVAILABLE",
+      "kind": "ERR",
+      "context": "    if(channel==RadioChannel::INVALID){snprintf(info,infoLen,\"ARG_MAIN_OR_BACKUP\");return \"ERR\";}\n    if(!radioReady){snprintf(info,infoLen,\"RADIO_UNAVAILABLE\");return \"ERR\";}\n    if(txBusy || ackPending){snprintf(info,infoLen,\"RADIO_BUSY\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1304,
+      "code": "RADIO_BUSY",
+      "kind": "REJECT",
+      "context": "    if(!radioReady){snprintf(info,infoLen,\"RADIO_UNAVAILABLE\");return \"ERR\";}\n    if(txBusy || ackPending){snprintf(info,infoLen,\"RADIO_BUSY\");return \"REJECT\";}\n    if(channel==radioSwitch.current){snprintf(info,infoLen,\"RADIO_CHANNEL=%s;MHZ=%.2f\",radioChannelName(channel),radioChannelMHz(channel));return \"OK\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1315,
+      "code": "ARG",
+      "kind": "ERR",
+      "context": "    else if (!strcmp(arg, \"ALL\")) mask = CAL_BARO | CAL_GYRO | CAL_ACCEL;\n    else { snprintf(info, infoLen, \"ARG\"); return \"ERR\"; }\n"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1317,
+      "code": "RECOVERY_SCANNING",
+      "kind": "REJECT",
+      "context": "\n    if(!recoveryDone){snprintf(info,infoLen,\"RECOVERY_SCANNING\");return \"REJECT\";}\n    if (calMask || calReport || calibrationPending) { snprintf(info, infoLen, \"CAL_BUSY\"); return \"REJECT\"; }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1318,
+      "code": "CAL_BUSY",
+      "kind": "REJECT",
+      "context": "    if(!recoveryDone){snprintf(info,infoLen,\"RECOVERY_SCANNING\");return \"REJECT\";}\n    if (calMask || calReport || calibrationPending) { snprintf(info, infoLen, \"CAL_BUSY\"); return \"REJECT\"; }\n    if ((mask & CAL_BARO) && !bmpOK) { snprintf(info, infoLen, \"NO_BMP\"); return \"ERR\"; }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1319,
+      "code": "NO_BMP",
+      "kind": "ERR",
+      "context": "    if (calMask || calReport || calibrationPending) { snprintf(info, infoLen, \"CAL_BUSY\"); return \"REJECT\"; }\n    if ((mask & CAL_BARO) && !bmpOK) { snprintf(info, infoLen, \"NO_BMP\"); return \"ERR\"; }\n    if (!bnoOK || !imuFresh || !gyroValid || uint32_t(now-gyroMs)>100) { snprintf(info, infoLen, \"IMU_STALE_OR_UNRELIABLE\"); return \"REJECT\"; }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1320,
+      "code": "IMU_STALE_OR_UNRELIABLE",
+      "kind": "REJECT",
+      "context": "    if ((mask & CAL_BARO) && !bmpOK) { snprintf(info, infoLen, \"NO_BMP\"); return \"ERR\"; }\n    if (!bnoOK || !imuFresh || !gyroValid || uint32_t(now-gyroMs)>100) { snprintf(info, infoLen, \"IMU_STALE_OR_UNRELIABLE\"); return \"REJECT\"; }\n    if(!calibrationStationary(now)){snprintf(info,infoLen,\"KEEP_ROCKET_STILL\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1321,
+      "code": "KEEP_ROCKET_STILL",
+      "kind": "REJECT",
+      "context": "    if (!bnoOK || !imuFresh || !gyroValid || uint32_t(now-gyroMs)>100) { snprintf(info, infoLen, \"IMU_STALE_OR_UNRELIABLE\"); return \"REJECT\"; }\n    if(!calibrationStationary(now)){snprintf(info,infoLen,\"KEEP_ROCKET_STILL\");return \"REJECT\";}\n    if(!(mask&CAL_BARO) && !baroReferenceReady){snprintf(info,infoLen,\"CAL_BARO_FIRST\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1322,
+      "code": "CAL_BARO_FIRST",
+      "kind": "REJECT",
+      "context": "    if(!calibrationStationary(now)){snprintf(info,infoLen,\"KEEP_ROCKET_STILL\");return \"REJECT\";}\n    if(!(mask&CAL_BARO) && !baroReferenceReady){snprintf(info,infoLen,\"CAL_BARO_FIRST\");return \"REJECT\";}\n"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1336,
+      "code": "NO_RTC",
+      "kind": "ERR",
+      "context": "#if USE_RTC\n    if (!rtcOK) { snprintf(info, infoLen, \"NO_RTC\"); return \"ERR\"; }\n    if(!recoveryDone){snprintf(info,infoLen,\"RECOVERY_SCANNING\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1337,
+      "code": "RECOVERY_SCANNING",
+      "kind": "REJECT",
+      "context": "    if (!rtcOK) { snprintf(info, infoLen, \"NO_RTC\"); return \"ERR\"; }\n    if(!recoveryDone){snprintf(info,infoLen,\"RECOVERY_SCANNING\");return \"REJECT\";}\n    uint32_t u = strtoul(arg, NULL, 10);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1339,
+      "code": "ARG",
+      "kind": "ERR",
+      "context": "    uint32_t u = strtoul(arg, NULL, 10);\n    if (!decimalU32(arg) || u < 1700000000UL || u>=4102444800UL) { snprintf(info, infoLen, \"ARG\"); return \"ERR\"; }\n    rtc.adjust(DateTime(u));"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1345,
+      "code": "RTC_VERIFY_FAILED",
+      "kind": "FAIL",
+      "context": "    rtcTrusted=rtcValid;rtcLastUnix=checked;rtcChangeMs=now;\n    if(!rtcValid){snprintf(info,infoLen,\"RTC_VERIFY_FAILED\");return \"FAIL\";}\n    logEvent(LOG_CLOCK);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1350,
+      "code": "NO_RTC",
+      "kind": "ERR",
+      "context": "#else\n    snprintf(info, infoLen, \"NO_RTC\");\n    return \"ERR\";"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1356,
+      "code": "RECOVERY_SCANNING",
+      "kind": "REJECT",
+      "context": "  if (!strcmp(name, \"REBOOT\")) {\n    if(!recoveryDone){snprintf(info,infoLen,\"RECOVERY_SCANNING\");return \"REJECT\";}\n    if(cameraQueued || cameraResultPending){snprintf(info,infoLen,\"CAM_BUSY\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1357,
+      "code": "CAM_BUSY",
+      "kind": "REJECT",
+      "context": "    if(!recoveryDone){snprintf(info,infoLen,\"RECOVERY_SCANNING\");return \"REJECT\";}\n    if(cameraQueued || cameraResultPending){snprintf(info,infoLen,\"CAM_BUSY\");return \"REJECT\";}\n    if(calMask || calibrationPending){snprintf(info,infoLen,\"CAL_BUSY\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1358,
+      "code": "CAL_BUSY",
+      "kind": "REJECT",
+      "context": "    if(cameraQueued || cameraResultPending){snprintf(info,infoLen,\"CAM_BUSY\");return \"REJECT\";}\n    if(calMask || calibrationPending){snprintf(info,infoLen,\"CAL_BUSY\");return \"REJECT\";}\n    if(!rebootPending){rebootPending=true;rebootRequestedMs=now;rebootReady=false;}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1365,
+      "code": "USE_RESETPAD_CONFIRM",
+      "kind": "ERR",
+      "context": "  if(!strcmp(name,\"RESETPAD\")){\n    if(strcmp(arg,\"CONFIRM\")){snprintf(info,infoLen,\"USE_RESETPAD_CONFIRM\");return \"ERR\";}\n    if(!recoveryDone || !journal.idle() || journal.criticalLost){snprintf(info,infoLen,\"STORAGE_BUSY_OR_NOT_RECOVERABLE\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1366,
+      "code": "STORAGE_BUSY_OR_NOT_RECOVERABLE",
+      "kind": "REJECT",
+      "context": "    if(strcmp(arg,\"CONFIRM\")){snprintf(info,infoLen,\"USE_RESETPAD_CONFIRM\");return \"ERR\";}\n    if(!recoveryDone || !journal.idle() || journal.criticalLost){snprintf(info,infoLen,\"STORAGE_BUSY_OR_NOT_RECOVERABLE\");return \"REJECT\";}\n    if(calMask || calReport || calibrationPending || sequenceToken || migrationToken){snprintf(info,infoLen,\"CAL_OR_COUNTER_BUSY\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1367,
+      "code": "CAL_OR_COUNTER_BUSY",
+      "kind": "REJECT",
+      "context": "    if(!recoveryDone || !journal.idle() || journal.criticalLost){snprintf(info,infoLen,\"STORAGE_BUSY_OR_NOT_RECOVERABLE\");return \"REJECT\";}\n    if(calMask || calReport || calibrationPending || sequenceToken || migrationToken){snprintf(info,infoLen,\"CAL_OR_COUNTER_BUSY\");return \"REJECT\";}\n    if(camRecording || cameraQueued || cameraResultPending){snprintf(info,infoLen,\"STOP_RECORDING_BEFORE_PAD_RESET\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1368,
+      "code": "STOP_RECORDING_BEFORE_PAD_RESET",
+      "kind": "REJECT",
+      "context": "    if(calMask || calReport || calibrationPending || sequenceToken || migrationToken){snprintf(info,infoLen,\"CAL_OR_COUNTER_BUSY\");return \"REJECT\";}\n    if(camRecording || cameraQueued || cameraResultPending){snprintf(info,infoLen,\"STOP_RECORDING_BEFORE_PAD_RESET\");return \"REJECT\";}\n    if(missionId==UINT32_MAX){snprintf(info,infoLen,\"MISSION_ID_EXHAUSTED\");return \"ERR\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1369,
+      "code": "MISSION_ID_EXHAUSTED",
+      "kind": "ERR",
+      "context": "    if(camRecording || cameraQueued || cameraResultPending){snprintf(info,infoLen,\"STOP_RECORDING_BEFORE_PAD_RESET\");return \"REJECT\";}\n    if(missionId==UINT32_MAX){snprintf(info,infoLen,\"MISSION_ID_EXHAUSTED\");return \"ERR\";}\n    FlightRecord r=padMissionResetRecord(flightSnapshot(LOG_MISSION_RESET,seq),missionId+1);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1372,
+      "code": "PAD_RESET_NOT_QUEUED",
+      "kind": "FAIL",
+      "context": "    padResetToken=persistCheckpoint(r);\n    if(!padResetToken){snprintf(info,infoLen,\"PAD_RESET_NOT_QUEUED\");return \"FAIL\";}\n    mission.armed=false; // immediately inhibit launch while the new PAD record commits"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1379,
+      "code": "STORAGE_NOT_RECOVERABLE",
+      "kind": "REJECT",
+      "context": "    if (!recoveryDone || !journal.usable() || journal.criticalLost) {\n      snprintf(info,infoLen,\"STORAGE_NOT_RECOVERABLE\");return \"REJECT\";\n    }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1381,
+      "code": "COUNTER_LEGACY_BASELINE_REQUIRED",
+      "kind": "REJECT",
+      "context": "    }\n    if(!sequenceKnown){snprintf(info,infoLen,\"COUNTER_LEGACY_BASELINE_REQUIRED\");return \"REJECT\";}\n    if(!telemetrySequence.next){snprintf(info,infoLen,\"COUNTER_EXHAUSTED\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1382,
+      "code": "COUNTER_EXHAUSTED",
+      "kind": "REJECT",
+      "context": "    if(!sequenceKnown){snprintf(info,infoLen,\"COUNTER_LEGACY_BASELINE_REQUIRED\");return \"REJECT\";}\n    if(!telemetrySequence.next){snprintf(info,infoLen,\"COUNTER_EXHAUSTED\");return \"REJECT\";}\n    if (recoveryHold && strcmp(arg,\"CONFIRM\")) {"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1384,
+      "code": "REVIEW_RECOVERY_THEN_ARM_CONFIRM",
+      "kind": "REJECT",
+      "context": "    if (recoveryHold && strcmp(arg,\"CONFIRM\")) {\n      snprintf(info,infoLen,\"REVIEW_RECOVERY_THEN_ARM_CONFIRM\");return \"REJECT\";\n    }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1386,
+      "code": "ARG_CONFIRM_OR_NONE",
+      "kind": "ERR",
+      "context": "    }\n    if(*arg && strcmp(arg,\"CONFIRM\")){snprintf(info,infoLen,\"ARG_CONFIRM_OR_NONE\");return \"ERR\";}\n    if((mission.launched && !mission.complete) || (mission.armed && !recoveryHold)){snprintf(info,infoLen,\"MISSION_ALREADY_ACTIVE\");return \"OK\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1388,
+      "code": "STOP_RECORDING_BEFORE_ARM",
+      "kind": "REJECT",
+      "context": "    if((mission.launched && !mission.complete) || (mission.armed && !recoveryHold)){snprintf(info,infoLen,\"MISSION_ALREADY_ACTIVE\");return \"OK\";}\n    if(camRecording || cameraQueued || cameraResultPending){snprintf(info,infoLen,\"STOP_RECORDING_BEFORE_ARM\");return \"REJECT\";}\n    if(!imuFresh || !gyroValid || uint32_t(now-gyroMs)>100){snprintf(info,infoLen,\"IMU_STALE_OR_UNRELIABLE\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1389,
+      "code": "IMU_STALE_OR_UNRELIABLE",
+      "kind": "REJECT",
+      "context": "    if(camRecording || cameraQueued || cameraResultPending){snprintf(info,infoLen,\"STOP_RECORDING_BEFORE_ARM\");return \"REJECT\";}\n    if(!imuFresh || !gyroValid || uint32_t(now-gyroMs)>100){snprintf(info,infoLen,\"IMU_STALE_OR_UNRELIABLE\");return \"REJECT\";}\n    if(!stationary){snprintf(info,infoLen,\"KEEP_ROCKET_STILL\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1390,
+      "code": "KEEP_ROCKET_STILL",
+      "kind": "REJECT",
+      "context": "    if(!imuFresh || !gyroValid || uint32_t(now-gyroMs)>100){snprintf(info,infoLen,\"IMU_STALE_OR_UNRELIABLE\");return \"REJECT\";}\n    if(!stationary){snprintf(info,infoLen,\"KEEP_ROCKET_STILL\");return \"REJECT\";}\n    if(!baroReferenceReady || !flightDataFresh){snprintf(info,infoLen,\"BARO_REFERENCE_NOT_READY\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1391,
+      "code": "BARO_REFERENCE_NOT_READY",
+      "kind": "REJECT",
+      "context": "    if(!stationary){snprintf(info,infoLen,\"KEEP_ROCKET_STILL\");return \"REJECT\";}\n    if(!baroReferenceReady || !flightDataFresh){snprintf(info,infoLen,\"BARO_REFERENCE_NOT_READY\");return \"REJECT\";}\n    if(calMask || calReport || calibrationPending){snprintf(info,infoLen,\"CAL_BUSY\");return \"REJECT\";}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1392,
+      "code": "CAL_BUSY",
+      "kind": "REJECT",
+      "context": "    if(!baroReferenceReady || !flightDataFresh){snprintf(info,infoLen,\"BARO_REFERENCE_NOT_READY\");return \"REJECT\";}\n    if(calMask || calReport || calibrationPending){snprintf(info,infoLen,\"CAL_BUSY\");return \"REJECT\";}\n    mission=MissionClock();mission.armed=true;++missionId;completionAttempted=false;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1400,
+      "code": "ARM_NOT_PERSISTED",
+      "kind": "FAIL",
+      "context": "    armToken=logEvent(LOG_ARM,seq);\n    if(!armToken){mission.armed=false;snprintf(info,infoLen,\"ARM_NOT_PERSISTED\");return \"FAIL\";}\n    snprintf(info, infoLen, \"MISSION_INITIALIZING\"); return \"OK\";"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1405,
+      "code": "USE_RESETCOUNT_CONFIRM",
+      "kind": "ERR",
+      "context": "  if(!strcmp(name,\"RESETCOUNT\")){\n    if(strcmp(arg,\"CONFIRM\")){snprintf(info,infoLen,\"USE_RESETCOUNT_CONFIRM\");return \"ERR\";}\n    if(counterResetResultPending || !recoveryDone || !journal.idle() || journal.criticalLost || !sequenceKnown ||"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1410,
+      "code": "RESETCOUNT_NEEDS_TELEM_OFF_IDLE_KNOWN_HEALTHY_STORE",
+      "kind": "REJECT",
+      "context": "       !journal.nextSequence || journal.nextSequence==UINT32_MAX){\n      snprintf(info,infoLen,\"RESETCOUNT_NEEDS_TELEM_OFF_IDLE_KNOWN_HEALTHY_STORE\");return \"REJECT\";\n    }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1414,
+      "code": "COUNTER_RESET_NOT_QUEUED",
+      "kind": "FAIL",
+      "context": "    counterResetToken=persistCheckpoint(r);\n    if(!counterResetToken){snprintf(info,infoLen,\"COUNTER_RESET_NOT_QUEUED\");return \"FAIL\";}\n    counterResetSequence=seq;counterResetFromUsb=commandFromUsb;counterResetQueuedMs=now;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1422,
+      "code": "COUNTER_MIGRATION_NOT_AVAILABLE",
+      "kind": "REJECT",
+      "context": "    if(sequenceKnown || migrationToken || !recoveryDone || !journal.usable()){\n      snprintf(info,infoLen,\"COUNTER_MIGRATION_NOT_AVAILABLE\");return \"REJECT\";\n    }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1424,
+      "code": "ARG_LAST_USED_UPPER_BOUND",
+      "kind": "ERR",
+      "context": "    }\n    if(!decimalU32(arg)){snprintf(info,infoLen,\"ARG_LAST_USED_UPPER_BOUND\");return \"ERR\";}\n    uint32_t floor=strtoul(arg,NULL,10);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1426,
+      "code": "COUNTER_RANGE",
+      "kind": "ERR",
+      "context": "    uint32_t floor=strtoul(arg,NULL,10);\n    if(!floor || floor<telemetrySequence.high || floor==UINT32_MAX){snprintf(info,infoLen,\"COUNTER_RANGE\");return \"ERR\";}\n    FlightRecord r=flightSnapshot(LOG_PACKET_RANGE,seq);r.metadata.telemetryHigh=floor;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1433,
+      "code": "UNKNOWN",
+      "kind": "ERR",
+      "context": "\n  snprintf(info, infoLen, \"UNKNOWN\");\n  return \"ERR\";"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1073,
+      "code": "CAL_STORAGE_FAILED_OLD_PARAMETERS_RETAINED",
+      "kind": "FAIL",
+      "context": "    calibrationPending=false;\n    if(calibrationFromCommand)calFinish(\"FAIL\",\"CAL_STORAGE_FAILED_OLD_PARAMETERS_RETAINED\");\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1081,
+      "code": "SENSOR_STALE_OR_UNRELIABLE",
+      "kind": "FAIL",
+      "context": "     ((calMask&CAL_BARO) && (!baroSeen || uint32_t(now-baroReadMs)>100))){\n    calFinish(\"FAIL\",\"SENSOR_STALE_OR_UNRELIABLE\");return;\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1084,
+      "code": "MOVED_OR_MISSION_ACTIVE",
+      "kind": "FAIL",
+      "context": "  if((state!=ST_PAD) || mission.launched || !calibrationStationary(now)){\n    calFinish(\"FAIL\",\"MOVED_OR_MISSION_ACTIVE\");return;\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1090,
+      "code": "PRESSURE_UNSTABLE",
+      "kind": "FAIL",
+      "context": "    calP+=pressurePa;++calPN;\n    if(fabsf(pressureToAltitude(calPressureMin,calPressureMax))>0.75f){calFinish(\"FAIL\",\"PRESSURE_UNSTABLE\");return;}\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1102,
+      "code": "INSUFFICIENT_FRESH_BARO",
+      "kind": "FAIL",
+      "context": "  // Validate ALL requested sample sets before changing any active parameter.\n  if((calMask&CAL_BARO) && calPN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_BARO\");return;}\n  if((calMask&CAL_GYRO) && calGN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_GYRO\");return;}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1103,
+      "code": "INSUFFICIENT_FRESH_GYRO",
+      "kind": "FAIL",
+      "context": "  if((calMask&CAL_BARO) && calPN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_BARO\");return;}\n  if((calMask&CAL_GYRO) && calGN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_GYRO\");return;}\n  if((calMask&CAL_ACCEL) && calAN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_ACCEL\");return;}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1104,
+      "code": "INSUFFICIENT_FRESH_ACCEL",
+      "kind": "FAIL",
+      "context": "  if((calMask&CAL_GYRO) && calGN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_GYRO\");return;}\n  if((calMask&CAL_ACCEL) && calAN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_ACCEL\");return;}\n  FlightCalibration value=calibration;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1109,
+      "code": "INVALID_CALIBRATION_OR_STORAGE_BUSY",
+      "kind": "FAIL",
+      "context": "  if(calMask&CAL_ACCEL)value.verticalBias=calVertical/calAN;\n  if(!beginCalibrationWrite(value,true,now))calFinish(\"FAIL\",\"INVALID_CALIBRATION_OR_STORAGE_BUSY\");\n}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1459,
+      "code": "AUTH_KEY",
+      "kind": "REJECT",
+      "context": "  if (!decimalU32(t[2]) || strtoul(t[2], NULL, 10) != CMD_KEY) {\n    if(fromUsb || !ackPending)queueAck(seq,\"REJECT\",\"AUTH_KEY\",fromUsb);\n    return;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1475,
+      "code": "DELAYED_DUPLICATE",
+      "kind": "REJECT",
+      "context": "  if(commandHistory.contains(seq)){\n    queueAck(seq,\"REJECT\",\"DELAYED_DUPLICATE\",fromUsb);return;\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 651,
+      "code": "CAM_NOT_SENT_STORAGE_OR_UART",
+      "kind": "ASYNC",
+      "context": "      snprintf(cameraResultStatus,sizeof(cameraResultStatus),\"%s\",sent?\"DONE\":\"FAIL\");\n      snprintf(cameraResultInfo,sizeof(cameraResultInfo),\"%s\",sent?(cameraQueuedStart?\"CAM_REC_START_SENT\":\"CAM_REC_STOP_SENT\"):\"CAM_NOT_SENT_STORAGE_OR_UART\");\n      cameraResultPending=true;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 805,
+      "code": "PAD_RESET_STORAGE_FAILED_REBOOT_TO_RESOLVE",
+      "kind": "ASYNC",
+      "context": "      snprintf(padResetStatus,sizeof(padResetStatus),\"FAIL\");\n      snprintf(padResetInfo,sizeof(padResetInfo),\"PAD_RESET_STORAGE_FAILED_REBOOT_TO_RESOLVE\");\n    }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1747,
+      "code": "COUNTER_RESET_STORAGE_FAILED_REBOOT",
+      "kind": "ASYNC",
+      "context": "      snprintf(counterResetStatus,sizeof(counterResetStatus),\"FAIL\");\n      snprintf(counterResetInfo,sizeof(counterResetInfo),\"COUNTER_RESET_STORAGE_FAILED_REBOOT\");\n      counterResetResultPending=true;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 850,
+      "code": "FAILED, code ",
+      "kind": "TRANSPORT/UI",
+      "context": "  if (st != RADIOLIB_ERR_NONE) {\n    Serial.print(\"FAILED, code \");\n    Serial.println(st);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 925,
+      "code": "# RTC calendar valid; UTC trust requires GNSS/TIME or journal",
+      "kind": "TRANSPORT/UI",
+      "context": "  rtcAnchorMs=rtcChangeMs=millis();\n  Serial.println(rtcValid?\"# RTC calendar valid; UTC trust requires GNSS/TIME or journal\":\"# RTC invalid; waiting for GNSS/TIME, no compile-time adjustment\");\n  return true;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 925,
+      "code": "# RTC invalid; waiting for GNSS/TIME, no compile-time adjustment",
+      "kind": "TRANSPORT/UI",
+      "context": "  rtcAnchorMs=rtcChangeMs=millis();\n  Serial.println(rtcValid?\"# RTC calendar valid; UTC trust requires GNSS/TIME or journal\":\"# RTC invalid; waiting for GNSS/TIME, no compile-time adjustment\");\n  return true;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 977,
+      "code": "# TX start failed, code ",
+      "kind": "TRANSPORT/UI",
+      "context": "  if (rc != RADIOLIB_ERR_NONE) {\n    Serial.print(\"# TX start failed, code \");\n    Serial.println(rc);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1440,
+      "code": "# USB rejected: invalid command frame/checksum or wrong vehicle",
+      "kind": "TRANSPORT/UI",
+      "context": "  if (!commandAddressMatches(s,strlen(s),TEAM_ID,VEHICLE_ID)) {\n    if(fromUsb)Serial.println(\"# USB rejected: invalid command frame/checksum or wrong vehicle\");\n    return;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1448,
+      "code": "# CMD bad checksum",
+      "kind": "TRANSPORT/UI",
+      "context": "  for (char* p = s + 1; p < star; p++) cs ^= (uint8_t)*p;\n  if (cs != (uint8_t)strtoul(star + 1, NULL, 16)) { Serial.println(\"# CMD bad checksum\"); return; }\n  *star = 0;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1456,
+      "code": "# USB rejected: invalid sequence",
+      "kind": "TRANSPORT/UI",
+      "context": "  if (nt < 5) return;                                          // CMD,team,key,seq,name\n  if (!decimalU32(t[3])) {if(fromUsb)Serial.println(\"# USB rejected: invalid sequence\");return;}\n  uint32_t seq = strtoul(t[3], NULL, 10);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1465,
+      "code": "# CMD busy: previous radio ACK pending",
+      "kind": "TRANSPORT/UI",
+      "context": "\n  if (ackPending && !fromUsb) {Serial.println(\"# CMD busy: previous radio ACK pending\");return;}\n"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1719,
+      "code": "# REBOOT: restarting after storage shutdown",
+      "kind": "TRANSPORT/UI",
+      "context": "      rebootReady=true;rebootReadyMs=now;\n      Serial.println(drained?\"# REBOOT: restarting after storage shutdown\":\"# REBOOT: storage drain timed out; latest unsynced SD rows may be lost\");\n      return;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1719,
+      "code": "# REBOOT: storage drain timed out; latest unsynced SD rows may be lost",
+      "kind": "TRANSPORT/UI",
+      "context": "      rebootReady=true;rebootReadyMs=now;\n      Serial.println(drained?\"# REBOOT: restarting after storage shutdown\":\"# REBOOT: storage drain timed out; latest unsynced SD rows may be lost\");\n      return;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1743,
+      "code": "# RESETCOUNT FAILED: storage fault; reboot for recovery",
+      "kind": "TRANSPORT/UI",
+      "context": "      // Outcome may be ambiguous: do not transmit until reboot recovery resolves it.\n      Serial.println(\"# RESETCOUNT FAILED: storage fault; reboot for recovery\");\n      sequenceKnown=false;counterResetToken=0;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1752,
+      "code": "# USB partial command discarded: enable Newline or CRLF in Serial Monitor",
+      "kind": "TRANSPORT/UI",
+      "context": "  static UsbCommandLine input;\n  if(!Serial.available() && input.expire(now))Serial.println(\"# USB partial command discarded: enable Newline or CRLF in Serial Monitor\");\n  for(uint8_t budget=0;budget<32 && Serial.available();++budget){"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1755,
+      "code": "# USB rejected: invalid/oversized line",
+      "kind": "TRANSPORT/UI",
+      "context": "    auto result=input.feed(Serial.read(),now);\n    if(result==UsbCommandLine::INVALID){Serial.println(\"# USB rejected: invalid/oversized line\");continue;}\n    if(result!=UsbCommandLine::LINE)continue;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1759,
+      "code": "# USB rejected: use NAME,arg or NAME arg; one argument only",
+      "kind": "TRANSPORT/UI",
+      "context": "    ConsoleCommand parsed;\n    if(!parseConsoleCommand(input.text,parsed)){Serial.println(\"# USB rejected: use NAME,arg or NAME arg; one argument only\");continue;}\n    if(!strcmp(parsed.name,\"HELP\")){"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1040,
+      "code": "ARG_ANGLE_0_270_OR_US_500_2500_OR_OFF",
+      "kind": "ERR",
+      "context": "    }\n    if(!decimalU32(arg)){snprintf(info,infoLen,\"ARG_ANGLE_0_270_OR_US_500_2500_OR_OFF\");return \"ERR\";}\n    uint32_t us=strtoul(arg,NULL,10);"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1043,
+      "code": "PWM25_RANGE_ANGLE_0_270_OR_US_500_2500",
+      "kind": "ERR",
+      "context": "    if(us<=PARACHUTE_ALLOWED_DEG)us=parachuteAngleUs(uint16_t(us));\n    if(us<500 || us>PARACHUTE_MAX_US){snprintf(info,infoLen,\"PWM25_RANGE_ANGLE_0_270_OR_US_500_2500\");return \"ERR\";}\n    parachuteOutput.manualOverride=true;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1046,
+      "code": "PWM25_OUTPUT_FAILED;FEEDBACK=NONE",
+      "kind": "FAIL",
+      "context": "    parachute.cancelTest();\n    if(!parachuteOutput.writeUs(uint16_t(us))){snprintf(info,infoLen,\"PWM25_OUTPUT_FAILED;FEEDBACK=NONE\");return \"FAIL\";}\n    // Best effort diagnostics only: direct PWM never depends on a flash commit."
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1052,
+      "code": "ESP32_ONLY",
+      "kind": "REJECT",
+      "context": "#else\n    snprintf(info,infoLen,\"ESP32_ONLY\");return \"REJECT\";\n#endif"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1059,
+      "code": "FLASH_MAINTENANCE_REBOOT_REQUIRED",
+      "kind": "REJECT",
+      "context": "     !(bootFlashErase.phase==BootFlashErase::FAILED && !strcmp(name,\"REBOOT\"))){\n    snprintf(info,infoLen,\"FLASH_MAINTENANCE_REBOOT_REQUIRED\");return \"REJECT\";\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1063,
+      "code": "RADIO_SWITCH_PENDING",
+      "kind": "REJECT",
+      "context": "  if(radioSwitch.pending && strcmp(name,\"STATUS\") && strcmp(name,\"PING\") && strcmp(name,\"HELP\")){\n    snprintf(info,infoLen,\"RADIO_SWITCH_PENDING\");return \"REJECT\";\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1066,
+      "code": "REBOOT_PENDING",
+      "kind": "REJECT",
+      "context": "  if(rebootPending && strcmp(name,\"STATUS\") && strcmp(name,\"PING\") && strcmp(name,\"HELP\") && strcmp(name,\"REBOOT\")){\n    snprintf(info,infoLen,\"REBOOT_PENDING\");return \"REJECT\";\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1069,
+      "code": "PAD_RESET_PENDING",
+      "kind": "REJECT",
+      "context": "  if((padResetToken || padResetResultPending) && strcmp(name,\"STATUS\") && strcmp(name,\"PING\") && strcmp(name,\"HELP\")){\n    snprintf(info,infoLen,\"PAD_RESET_PENDING\");return \"REJECT\";\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1073,
+      "code": "COUNTER_RESET_PENDING",
+      "kind": "REJECT",
+      "context": "     (strcmp(name,\"TELEM\") || strcmp(arg,\"0\"))){\n    snprintf(info,infoLen,\"COUNTER_RESET_PENDING\");return \"REJECT\";\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1112,
+      "code": "FLASH_READ_UNAVAILABLE;STORE=%u",
+      "kind": "ERR",
+      "context": "      if(!flashHardware.read(address,bytes,sizeof(bytes))){\n        snprintf(info,infoLen,\"FLASH_READ_UNAVAILABLE;STORE=%u\",unsigned(journal.status));return \"ERR\";\n      }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1187,
+      "code": "ARG",
+      "kind": "ERR",
+      "context": "    }\n    snprintf(info, infoLen, \"ARG\");\n    return \"ERR\";"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1192,
+      "code": "ARG_UNSIGNED_MS",
+      "kind": "ERR",
+      "context": "  if (!strcmp(name, \"RATE\")) {\n    if(!decimalU32(arg)){snprintf(info,infoLen,\"ARG_UNSIGNED_MS\");return \"ERR\";}\n    long v = atol(arg);"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1194,
+      "code": "RANGE_%d_%d",
+      "kind": "ERR",
+      "context": "    long v = atol(arg);\n    if (v < RATE_MIN_MS || v > RATE_MAX_MS) { snprintf(info, infoLen, \"RANGE_%d_%d\", RATE_MIN_MS, RATE_MAX_MS); return \"ERR\"; }\n    telemetryPeriodMs = (uint32_t)v;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1202,
+      "code": "ARG_MAIN_OR_BACKUP",
+      "kind": "ERR",
+      "context": "    RadioChannel channel=radioChannel(arg);\n    if(channel==RadioChannel::INVALID){snprintf(info,infoLen,\"ARG_MAIN_OR_BACKUP\");return \"ERR\";}\n    if(!radioReady){snprintf(info,infoLen,\"RADIO_UNAVAILABLE\");return \"ERR\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1203,
+      "code": "RADIO_UNAVAILABLE",
+      "kind": "ERR",
+      "context": "    if(channel==RadioChannel::INVALID){snprintf(info,infoLen,\"ARG_MAIN_OR_BACKUP\");return \"ERR\";}\n    if(!radioReady){snprintf(info,infoLen,\"RADIO_UNAVAILABLE\");return \"ERR\";}\n    if(txBusy || ackPending){snprintf(info,infoLen,\"RADIO_BUSY\");return \"REJECT\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1204,
+      "code": "RADIO_BUSY",
+      "kind": "REJECT",
+      "context": "    if(!radioReady){snprintf(info,infoLen,\"RADIO_UNAVAILABLE\");return \"ERR\";}\n    if(txBusy || ackPending){snprintf(info,infoLen,\"RADIO_BUSY\");return \"REJECT\";}\n    if(channel==radioSwitch.current){snprintf(info,infoLen,\"RADIO_CHANNEL=%s;MHZ=%.2f\",radioChannelName(channel),radioChannelMHz(channel));return \"OK\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1215,
+      "code": "ARG",
+      "kind": "ERR",
+      "context": "    else if (!strcmp(arg, \"ALL\")) mask = CAL_BARO | CAL_GYRO | CAL_ACCEL;\n    else { snprintf(info, infoLen, \"ARG\"); return \"ERR\"; }\n"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1217,
+      "code": "RECOVERY_SCANNING",
+      "kind": "REJECT",
+      "context": "\n    if(!recoveryDone){snprintf(info,infoLen,\"RECOVERY_SCANNING\");return \"REJECT\";}\n    if (calMask || calReport || calibrationPending) { snprintf(info, infoLen, \"CAL_BUSY\"); return \"REJECT\"; }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1218,
+      "code": "CAL_BUSY",
+      "kind": "REJECT",
+      "context": "    if(!recoveryDone){snprintf(info,infoLen,\"RECOVERY_SCANNING\");return \"REJECT\";}\n    if (calMask || calReport || calibrationPending) { snprintf(info, infoLen, \"CAL_BUSY\"); return \"REJECT\"; }\n    if ((mask & CAL_BARO) && !bmpOK) { snprintf(info, infoLen, \"NO_BMP\"); return \"ERR\"; }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1219,
+      "code": "NO_BMP",
+      "kind": "ERR",
+      "context": "    if (calMask || calReport || calibrationPending) { snprintf(info, infoLen, \"CAL_BUSY\"); return \"REJECT\"; }\n    if ((mask & CAL_BARO) && !bmpOK) { snprintf(info, infoLen, \"NO_BMP\"); return \"ERR\"; }\n    if (!bnoOK || !imuFresh || !gyroValid || uint32_t(now-gyroMs)>100) { snprintf(info, infoLen, \"IMU_STALE_OR_UNRELIABLE\"); return \"REJECT\"; }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1220,
+      "code": "IMU_STALE_OR_UNRELIABLE",
+      "kind": "REJECT",
+      "context": "    if ((mask & CAL_BARO) && !bmpOK) { snprintf(info, infoLen, \"NO_BMP\"); return \"ERR\"; }\n    if (!bnoOK || !imuFresh || !gyroValid || uint32_t(now-gyroMs)>100) { snprintf(info, infoLen, \"IMU_STALE_OR_UNRELIABLE\"); return \"REJECT\"; }\n    if(!calibrationStationary(now)){snprintf(info,infoLen,\"KEEP_CanSat_STILL\");return \"REJECT\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1221,
+      "code": "KEEP_CanSat_STILL",
+      "kind": "REJECT",
+      "context": "    if (!bnoOK || !imuFresh || !gyroValid || uint32_t(now-gyroMs)>100) { snprintf(info, infoLen, \"IMU_STALE_OR_UNRELIABLE\"); return \"REJECT\"; }\n    if(!calibrationStationary(now)){snprintf(info,infoLen,\"KEEP_CanSat_STILL\");return \"REJECT\";}\n    if(!(mask&CAL_BARO) && !baroReferenceReady){snprintf(info,infoLen,\"CAL_BARO_FIRST\");return \"REJECT\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1222,
+      "code": "CAL_BARO_FIRST",
+      "kind": "REJECT",
+      "context": "    if(!calibrationStationary(now)){snprintf(info,infoLen,\"KEEP_CanSat_STILL\");return \"REJECT\";}\n    if(!(mask&CAL_BARO) && !baroReferenceReady){snprintf(info,infoLen,\"CAL_BARO_FIRST\");return \"REJECT\";}\n"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1236,
+      "code": "NO_RTC",
+      "kind": "ERR",
+      "context": "#if USE_RTC\n    if (!rtcOK) { snprintf(info, infoLen, \"NO_RTC\"); return \"ERR\"; }\n    if(!recoveryDone){snprintf(info,infoLen,\"RECOVERY_SCANNING\");return \"REJECT\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1237,
+      "code": "RECOVERY_SCANNING",
+      "kind": "REJECT",
+      "context": "    if (!rtcOK) { snprintf(info, infoLen, \"NO_RTC\"); return \"ERR\"; }\n    if(!recoveryDone){snprintf(info,infoLen,\"RECOVERY_SCANNING\");return \"REJECT\";}\n    uint32_t u = strtoul(arg, NULL, 10);"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1239,
+      "code": "ARG",
+      "kind": "ERR",
+      "context": "    uint32_t u = strtoul(arg, NULL, 10);\n    if (!decimalU32(arg) || u < 1700000000UL || u>=4102444800UL) { snprintf(info, infoLen, \"ARG\"); return \"ERR\"; }\n    rtc.adjust(DateTime(u));"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1244,
+      "code": "RTC_VERIFY_FAILED",
+      "kind": "FAIL",
+      "context": "    rtcTrusted=rtcValid;rtcLastUnix=checked;rtcChangeMs=now;\n    if(!rtcValid){snprintf(info,infoLen,\"RTC_VERIFY_FAILED\");return \"FAIL\";}\n    logEvent(LOG_CLOCK);"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1249,
+      "code": "NO_RTC",
+      "kind": "ERR",
+      "context": "#else\n    snprintf(info, infoLen, \"NO_RTC\");\n    return \"ERR\";"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1256,
+      "code": "ARG_TEST_OR_CANCEL",
+      "kind": "ERR",
+      "context": "#if defined(ARDUINO_ARCH_ESP32)\n    if(strcmp(arg,\"TEST\") && strcmp(arg,\"CANCEL\")){snprintf(info,infoLen,\"ARG_TEST_OR_CANCEL\");return \"ERR\";}\n    if(!PARACHUTE_TEST_MODE){snprintf(info,infoLen,\"TEST_MODE_DISABLED_IN_CODE\");return \"REJECT\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1257,
+      "code": "TEST_MODE_DISABLED_IN_CODE",
+      "kind": "REJECT",
+      "context": "    if(strcmp(arg,\"TEST\") && strcmp(arg,\"CANCEL\")){snprintf(info,infoLen,\"ARG_TEST_OR_CANCEL\");return \"ERR\";}\n    if(!PARACHUTE_TEST_MODE){snprintf(info,infoLen,\"TEST_MODE_DISABLED_IN_CODE\");return \"REJECT\";}\n    if(!strcmp(arg,\"CANCEL\")){parachute.cancelTest();snprintf(info,infoLen,\"HANDLIFT_CANCELLED;PWM_UNCHANGED\");return \"OK\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1259,
+      "code": "TEST_REQUIRES_UNARMED_RECOVERED_MISSION",
+      "kind": "REJECT",
+      "context": "    if(!strcmp(arg,\"CANCEL\")){parachute.cancelTest();snprintf(info,infoLen,\"HANDLIFT_CANCELLED;PWM_UNCHANGED\");return \"OK\";}\n    if(!parachuteTestSafe()){snprintf(info,infoLen,\"TEST_REQUIRES_UNARMED_RECOVERED_MISSION\");return \"REJECT\";}\n    if(!baroReferenceReady || !flightDataFresh || !isfinite(altitude)){"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1261,
+      "code": "BARO_REFERENCE_NOT_READY",
+      "kind": "REJECT",
+      "context": "    if(!baroReferenceReady || !flightDataFresh || !isfinite(altitude)){\n      snprintf(info,infoLen,\"BARO_REFERENCE_NOT_READY\");return \"REJECT\";\n    }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1263,
+      "code": "HANDLIFT_ALREADY_ARMED",
+      "kind": "REJECT",
+      "context": "    }\n    if(parachute.testArmed){snprintf(info,infoLen,\"HANDLIFT_ALREADY_ARMED\");return \"REJECT\";}\n    parachute.armTest(altitude);"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1268,
+      "code": "ESP32_ONLY",
+      "kind": "REJECT",
+      "context": "#else\n    snprintf(info,infoLen,\"ESP32_ONLY\");return \"REJECT\";\n#endif"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1272,
+      "code": "RECOVERY_SCANNING",
+      "kind": "REJECT",
+      "context": "  if (!strcmp(name, \"REBOOT\")) {\n    if(!recoveryDone){snprintf(info,infoLen,\"RECOVERY_SCANNING\");return \"REJECT\";}\n    if(calMask || calibrationPending){snprintf(info,infoLen,\"CAL_BUSY\");return \"REJECT\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1273,
+      "code": "CAL_BUSY",
+      "kind": "REJECT",
+      "context": "    if(!recoveryDone){snprintf(info,infoLen,\"RECOVERY_SCANNING\");return \"REJECT\";}\n    if(calMask || calibrationPending){snprintf(info,infoLen,\"CAL_BUSY\");return \"REJECT\";}\n    if(!rebootPending){rebootPending=true;rebootRequestedMs=now;rebootReady=false;}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1280,
+      "code": "USE_RESETPAD_CONFIRM",
+      "kind": "ERR",
+      "context": "  if(!strcmp(name,\"RESETPAD\")){\n    if(strcmp(arg,\"CONFIRM\")){snprintf(info,infoLen,\"USE_RESETPAD_CONFIRM\");return \"ERR\";}\n    if(!recoveryDone || !journal.idle() || journal.criticalLost){snprintf(info,infoLen,\"STORAGE_BUSY_OR_NOT_RECOVERABLE\");return \"REJECT\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1281,
+      "code": "STORAGE_BUSY_OR_NOT_RECOVERABLE",
+      "kind": "REJECT",
+      "context": "    if(strcmp(arg,\"CONFIRM\")){snprintf(info,infoLen,\"USE_RESETPAD_CONFIRM\");return \"ERR\";}\n    if(!recoveryDone || !journal.idle() || journal.criticalLost){snprintf(info,infoLen,\"STORAGE_BUSY_OR_NOT_RECOVERABLE\");return \"REJECT\";}\n    if(calMask || calReport || calibrationPending || sequenceToken || migrationToken){snprintf(info,infoLen,\"CAL_OR_COUNTER_BUSY\");return \"REJECT\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1282,
+      "code": "CAL_OR_COUNTER_BUSY",
+      "kind": "REJECT",
+      "context": "    if(!recoveryDone || !journal.idle() || journal.criticalLost){snprintf(info,infoLen,\"STORAGE_BUSY_OR_NOT_RECOVERABLE\");return \"REJECT\";}\n    if(calMask || calReport || calibrationPending || sequenceToken || migrationToken){snprintf(info,infoLen,\"CAL_OR_COUNTER_BUSY\");return \"REJECT\";}\n    if(missionId==UINT32_MAX){snprintf(info,infoLen,\"MISSION_ID_EXHAUSTED\");return \"ERR\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1283,
+      "code": "MISSION_ID_EXHAUSTED",
+      "kind": "ERR",
+      "context": "    if(calMask || calReport || calibrationPending || sequenceToken || migrationToken){snprintf(info,infoLen,\"CAL_OR_COUNTER_BUSY\");return \"REJECT\";}\n    if(missionId==UINT32_MAX){snprintf(info,infoLen,\"MISSION_ID_EXHAUSTED\");return \"ERR\";}\n    FlightRecord r=padMissionResetRecord(flightSnapshot(LOG_MISSION_RESET,seq),missionId+1);"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1286,
+      "code": "PAD_RESET_NOT_QUEUED",
+      "kind": "FAIL",
+      "context": "    padResetToken=persistCheckpoint(r);\n    if(!padResetToken){snprintf(info,infoLen,\"PAD_RESET_NOT_QUEUED\");return \"FAIL\";}\n    mission.armed=false; // immediately inhibit launch while the new PAD record commits"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1292,
+      "code": "BENCH_BUILD_ARM_DISABLED",
+      "kind": "REJECT",
+      "context": "  if (!strcmp(name, \"ARM\")) {\n    if(PARACHUTE_TEST_MODE){snprintf(info,infoLen,\"BENCH_BUILD_ARM_DISABLED\");return \"REJECT\";}\n    if (!recoveryDone || !journal.usable() || journal.criticalLost) {"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1294,
+      "code": "STORAGE_NOT_RECOVERABLE",
+      "kind": "REJECT",
+      "context": "    if (!recoveryDone || !journal.usable() || journal.criticalLost) {\n      snprintf(info,infoLen,\"STORAGE_NOT_RECOVERABLE\");return \"REJECT\";\n    }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1296,
+      "code": "COUNTER_LEGACY_BASELINE_REQUIRED",
+      "kind": "REJECT",
+      "context": "    }\n    if(!sequenceKnown){snprintf(info,infoLen,\"COUNTER_LEGACY_BASELINE_REQUIRED\");return \"REJECT\";}\n    if(!telemetrySequence.next){snprintf(info,infoLen,\"COUNTER_EXHAUSTED\");return \"REJECT\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1297,
+      "code": "COUNTER_EXHAUSTED",
+      "kind": "REJECT",
+      "context": "    if(!sequenceKnown){snprintf(info,infoLen,\"COUNTER_LEGACY_BASELINE_REQUIRED\");return \"REJECT\";}\n    if(!telemetrySequence.next){snprintf(info,infoLen,\"COUNTER_EXHAUSTED\");return \"REJECT\";}\n    if (recoveryHold && strcmp(arg,\"CONFIRM\")) {"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1299,
+      "code": "REVIEW_RECOVERY_THEN_ARM_CONFIRM",
+      "kind": "REJECT",
+      "context": "    if (recoveryHold && strcmp(arg,\"CONFIRM\")) {\n      snprintf(info,infoLen,\"REVIEW_RECOVERY_THEN_ARM_CONFIRM\");return \"REJECT\";\n    }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1301,
+      "code": "ARG_CONFIRM_OR_NONE",
+      "kind": "ERR",
+      "context": "    }\n    if(*arg && strcmp(arg,\"CONFIRM\")){snprintf(info,infoLen,\"ARG_CONFIRM_OR_NONE\");return \"ERR\";}\n    if((mission.launched && !mission.complete) || (mission.armed && !recoveryHold)){snprintf(info,infoLen,\"MISSION_ALREADY_ACTIVE\");return \"OK\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1303,
+      "code": "IMU_STALE_OR_UNRELIABLE",
+      "kind": "REJECT",
+      "context": "    if((mission.launched && !mission.complete) || (mission.armed && !recoveryHold)){snprintf(info,infoLen,\"MISSION_ALREADY_ACTIVE\");return \"OK\";}\n    if(!imuFresh || !gyroValid || uint32_t(now-gyroMs)>100){snprintf(info,infoLen,\"IMU_STALE_OR_UNRELIABLE\");return \"REJECT\";}\n    if(!stationary){snprintf(info,infoLen,\"KEEP_CanSat_STILL\");return \"REJECT\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1304,
+      "code": "KEEP_CanSat_STILL",
+      "kind": "REJECT",
+      "context": "    if(!imuFresh || !gyroValid || uint32_t(now-gyroMs)>100){snprintf(info,infoLen,\"IMU_STALE_OR_UNRELIABLE\");return \"REJECT\";}\n    if(!stationary){snprintf(info,infoLen,\"KEEP_CanSat_STILL\");return \"REJECT\";}\n    if(!baroReferenceReady || !flightDataFresh){snprintf(info,infoLen,\"BARO_REFERENCE_NOT_READY\");return \"REJECT\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1305,
+      "code": "BARO_REFERENCE_NOT_READY",
+      "kind": "REJECT",
+      "context": "    if(!stationary){snprintf(info,infoLen,\"KEEP_CanSat_STILL\");return \"REJECT\";}\n    if(!baroReferenceReady || !flightDataFresh){snprintf(info,infoLen,\"BARO_REFERENCE_NOT_READY\");return \"REJECT\";}\n    if(calMask || calReport || calibrationPending){snprintf(info,infoLen,\"CAL_BUSY\");return \"REJECT\";}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1306,
+      "code": "CAL_BUSY",
+      "kind": "REJECT",
+      "context": "    if(!baroReferenceReady || !flightDataFresh){snprintf(info,infoLen,\"BARO_REFERENCE_NOT_READY\");return \"REJECT\";}\n    if(calMask || calReport || calibrationPending){snprintf(info,infoLen,\"CAL_BUSY\");return \"REJECT\";}\n    mission=MissionClock();mission.armed=true;++missionId;completionAttempted=false;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1313,
+      "code": "ARM_NOT_PERSISTED",
+      "kind": "FAIL",
+      "context": "    armToken=logEvent(LOG_ARM,seq);\n    if(!armToken){mission.armed=false;snprintf(info,infoLen,\"ARM_NOT_PERSISTED\");return \"FAIL\";}\n    snprintf(info, infoLen, \"MISSION_INITIALIZING\"); return \"OK\";"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1318,
+      "code": "USE_RESETCOUNT_CONFIRM",
+      "kind": "ERR",
+      "context": "  if(!strcmp(name,\"RESETCOUNT\")){\n    if(strcmp(arg,\"CONFIRM\")){snprintf(info,infoLen,\"USE_RESETCOUNT_CONFIRM\");return \"ERR\";}\n    if(counterResetResultPending || !recoveryDone || !journal.idle() || journal.criticalLost || !sequenceKnown ||"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1323,
+      "code": "RESETCOUNT_NEEDS_TELEM_OFF_IDLE_KNOWN_HEALTHY_STORE",
+      "kind": "REJECT",
+      "context": "       !journal.nextSequence || journal.nextSequence==UINT32_MAX){\n      snprintf(info,infoLen,\"RESETCOUNT_NEEDS_TELEM_OFF_IDLE_KNOWN_HEALTHY_STORE\");return \"REJECT\";\n    }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1327,
+      "code": "COUNTER_RESET_NOT_QUEUED",
+      "kind": "FAIL",
+      "context": "    counterResetToken=persistCheckpoint(r);\n    if(!counterResetToken){snprintf(info,infoLen,\"COUNTER_RESET_NOT_QUEUED\");return \"FAIL\";}\n    counterResetSequence=seq;counterResetFromUsb=commandFromUsb;counterResetQueuedMs=now;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1335,
+      "code": "COUNTER_MIGRATION_NOT_AVAILABLE",
+      "kind": "REJECT",
+      "context": "    if(sequenceKnown || migrationToken || !recoveryDone || !journal.usable()){\n      snprintf(info,infoLen,\"COUNTER_MIGRATION_NOT_AVAILABLE\");return \"REJECT\";\n    }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1337,
+      "code": "ARG_LAST_USED_UPPER_BOUND",
+      "kind": "ERR",
+      "context": "    }\n    if(!decimalU32(arg)){snprintf(info,infoLen,\"ARG_LAST_USED_UPPER_BOUND\");return \"ERR\";}\n    uint32_t floor=strtoul(arg,NULL,10);"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1339,
+      "code": "COUNTER_RANGE",
+      "kind": "ERR",
+      "context": "    uint32_t floor=strtoul(arg,NULL,10);\n    if(!floor || floor<telemetrySequence.high || floor==UINT32_MAX){snprintf(info,infoLen,\"COUNTER_RANGE\");return \"ERR\";}\n    FlightRecord r=flightSnapshot(LOG_PACKET_RANGE,seq);r.metadata.telemetryHigh=floor;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1346,
+      "code": "UNKNOWN",
+      "kind": "ERR",
+      "context": "\n  snprintf(info, infoLen, \"UNKNOWN\");\n  return \"ERR\";"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 989,
+      "code": "CAL_STORAGE_FAILED_OLD_PARAMETERS_RETAINED",
+      "kind": "FAIL",
+      "context": "    calibrationPending=false;\n    if(calibrationFromCommand)calFinish(\"FAIL\",\"CAL_STORAGE_FAILED_OLD_PARAMETERS_RETAINED\");\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 997,
+      "code": "SENSOR_STALE_OR_UNRELIABLE",
+      "kind": "FAIL",
+      "context": "     ((calMask&CAL_BARO) && (!baroSeen || uint32_t(now-baroReadMs)>100))){\n    calFinish(\"FAIL\",\"SENSOR_STALE_OR_UNRELIABLE\");return;\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1000,
+      "code": "MOVED_OR_MISSION_ACTIVE",
+      "kind": "FAIL",
+      "context": "  if((state!=ST_PAD) || mission.launched || !calibrationStationary(now)){\n    calFinish(\"FAIL\",\"MOVED_OR_MISSION_ACTIVE\");return;\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1006,
+      "code": "PRESSURE_UNSTABLE",
+      "kind": "FAIL",
+      "context": "    calP+=pressurePa;++calPN;\n    if(fabsf(pressureToAltitude(calPressureMin,calPressureMax))>0.75f){calFinish(\"FAIL\",\"PRESSURE_UNSTABLE\");return;}\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1018,
+      "code": "INSUFFICIENT_FRESH_BARO",
+      "kind": "FAIL",
+      "context": "  // Validate ALL requested sample sets before changing any active parameter.\n  if((calMask&CAL_BARO) && calPN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_BARO\");return;}\n  if((calMask&CAL_GYRO) && calGN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_GYRO\");return;}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1019,
+      "code": "INSUFFICIENT_FRESH_GYRO",
+      "kind": "FAIL",
+      "context": "  if((calMask&CAL_BARO) && calPN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_BARO\");return;}\n  if((calMask&CAL_GYRO) && calGN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_GYRO\");return;}\n  if((calMask&CAL_ACCEL) && calAN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_ACCEL\");return;}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1020,
+      "code": "INSUFFICIENT_FRESH_ACCEL",
+      "kind": "FAIL",
+      "context": "  if((calMask&CAL_GYRO) && calGN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_GYRO\");return;}\n  if((calMask&CAL_ACCEL) && calAN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_ACCEL\");return;}\n  FlightCalibration value=calibration;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1025,
+      "code": "INVALID_CALIBRATION_OR_STORAGE_BUSY",
+      "kind": "FAIL",
+      "context": "  if(calMask&CAL_ACCEL)value.verticalBias=calVertical/calAN;\n  if(!beginCalibrationWrite(value,true,now))calFinish(\"FAIL\",\"INVALID_CALIBRATION_OR_STORAGE_BUSY\");\n}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1372,
+      "code": "AUTH_KEY",
+      "kind": "REJECT",
+      "context": "  if (!decimalU32(t[2]) || strtoul(t[2], NULL, 10) != CMD_KEY) {\n    if(fromUsb || !ackPending)queueAck(seq,\"REJECT\",\"AUTH_KEY\",fromUsb);\n    return;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1388,
+      "code": "DELAYED_DUPLICATE",
+      "kind": "REJECT",
+      "context": "  if(commandHistory.contains(seq)){\n    queueAck(seq,\"REJECT\",\"DELAYED_DUPLICATE\",fromUsb);return;\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 722,
+      "code": "PAD_RESET_STORAGE_FAILED_REBOOT_TO_RESOLVE",
+      "kind": "ASYNC",
+      "context": "      snprintf(padResetStatus,sizeof(padResetStatus),\"FAIL\");\n      snprintf(padResetInfo,sizeof(padResetInfo),\"PAD_RESET_STORAGE_FAILED_REBOOT_TO_RESOLVE\");\n    }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1632,
+      "code": "COUNTER_RESET_STORAGE_FAILED_REBOOT",
+      "kind": "ASYNC",
+      "context": "      snprintf(counterResetStatus,sizeof(counterResetStatus),\"FAIL\");\n      snprintf(counterResetInfo,sizeof(counterResetInfo),\"COUNTER_RESET_STORAGE_FAILED_REBOOT\");\n      counterResetResultPending=true;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 764,
+      "code": "# SX1262 pins: SCK=%d MISO=%d MOSI=%d CS=%d RESET=%d BUSY=%d\\n",
+      "kind": "TRANSPORT/UI",
+      "context": "#if defined(ARDUINO_ARCH_ESP32)\n  Serial.printf(\"# SX1262 pins: SCK=%d MISO=%d MOSI=%d CS=%d RESET=%d BUSY=%d\\n\",\n    CanSatPins::SCK_PIN,CanSatPins::RADIO_MISO,CanSatPins::RADIO_MOSI,"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 771,
+      "code": "FAILED, code ",
+      "kind": "TRANSPORT/UI",
+      "context": "  if (st != RADIOLIB_ERR_NONE) {\n    Serial.print(\"FAILED, code \");\n    Serial.println(st);"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 785,
+      "code": "# SX1262 RF-switch configuration failed: %d\\n",
+      "kind": "TRANSPORT/UI",
+      "context": "  st=radio.setDio2AsRfSwitch(true); // existing ESP32 lora_tx module assumption\n  if(st!=RADIOLIB_ERR_NONE){Serial.printf(\"# SX1262 RF-switch configuration failed: %d\\n\",st);return false;}\n#else"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 830,
+      "code": "# IMU initialization failed at 0x69",
+      "kind": "TRANSPORT/UI",
+      "context": "  if(ok)Serial.printf(\"# %s detected at 0x69; keep stationary for gravity initialization\\n\",bno.modelName());\n  else Serial.println(\"# IMU initialization failed at 0x69\");\n  if(!ok)Serial.printf(\"# IMU init detail: WHO=%02X REG=%02X I2C=%u INIT=%u (see STATUS IMU)\\n\","
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 863,
+      "code": "# RTC calendar valid; UTC trust requires TIME or journal",
+      "kind": "TRANSPORT/UI",
+      "context": "  rtcAnchorMs=rtcChangeMs=millis();\n  Serial.println(rtcValid?\"# RTC calendar valid; UTC trust requires TIME or journal\":\"# RTC invalid; waiting for TIME, no compile-time adjustment\");\n  return true;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 863,
+      "code": "# RTC invalid; waiting for TIME, no compile-time adjustment",
+      "kind": "TRANSPORT/UI",
+      "context": "  rtcAnchorMs=rtcChangeMs=millis();\n  Serial.println(rtcValid?\"# RTC calendar valid; UTC trust requires TIME or journal\":\"# RTC invalid; waiting for TIME, no compile-time adjustment\");\n  return true;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 893,
+      "code": "# TX start failed, code ",
+      "kind": "TRANSPORT/UI",
+      "context": "  if (rc != RADIOLIB_ERR_NONE) {\n    Serial.print(\"# TX start failed, code \");\n    Serial.println(rc);"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1353,
+      "code": "# USB rejected: invalid command frame/checksum or wrong vehicle",
+      "kind": "TRANSPORT/UI",
+      "context": "  if (!commandAddressMatches(s,strlen(s),TEAM_ID,VEHICLE_ID)) {\n    if(fromUsb)Serial.println(\"# USB rejected: invalid command frame/checksum or wrong vehicle\");\n    return;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1361,
+      "code": "# CMD bad checksum",
+      "kind": "TRANSPORT/UI",
+      "context": "  for (char* p = s + 1; p < star; p++) cs ^= (uint8_t)*p;\n  if (cs != (uint8_t)strtoul(star + 1, NULL, 16)) { Serial.println(\"# CMD bad checksum\"); return; }\n  *star = 0;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1369,
+      "code": "# USB rejected: invalid sequence",
+      "kind": "TRANSPORT/UI",
+      "context": "  if (nt < 5) return;                                          // CMD,team,key,seq,name\n  if (!decimalU32(t[3])) {if(fromUsb)Serial.println(\"# USB rejected: invalid sequence\");return;}\n  uint32_t seq = strtoul(t[3], NULL, 10);"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1378,
+      "code": "# CMD busy: previous radio ACK pending",
+      "kind": "TRANSPORT/UI",
+      "context": "\n  if (ackPending && !fromUsb) {Serial.println(\"# CMD busy: previous radio ACK pending\");return;}\n"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1600,
+      "code": "# REBOOT: restarting after storage shutdown",
+      "kind": "TRANSPORT/UI",
+      "context": "      rebootReady=true;rebootReadyMs=now;\n      Serial.println(drained?\"# REBOOT: restarting after storage shutdown\":\"# REBOOT: storage drain timed out; latest unsynced SD rows may be lost\");\n      return;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1600,
+      "code": "# REBOOT: storage drain timed out; latest unsynced SD rows may be lost",
+      "kind": "TRANSPORT/UI",
+      "context": "      rebootReady=true;rebootReadyMs=now;\n      Serial.println(drained?\"# REBOOT: restarting after storage shutdown\":\"# REBOOT: storage drain timed out; latest unsynced SD rows may be lost\");\n      return;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1628,
+      "code": "# RESETCOUNT FAILED: storage fault; reboot for recovery",
+      "kind": "TRANSPORT/UI",
+      "context": "      // Outcome may be ambiguous: do not transmit until reboot recovery resolves it.\n      Serial.println(\"# RESETCOUNT FAILED: storage fault; reboot for recovery\");\n      sequenceKnown=false;counterResetToken=0;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1637,
+      "code": "# USB partial command discarded: enable Newline or CRLF in Serial Monitor",
+      "kind": "TRANSPORT/UI",
+      "context": "  static UsbCommandLine input;\n  if(!Serial.available() && input.expire(now))Serial.println(\"# USB partial command discarded: enable Newline or CRLF in Serial Monitor\");\n  for(uint8_t budget=0;budget<32 && Serial.available();++budget){"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1640,
+      "code": "# USB rejected: invalid/oversized line",
+      "kind": "TRANSPORT/UI",
+      "context": "    auto result=input.feed(Serial.read(),now);\n    if(result==UsbCommandLine::INVALID){Serial.println(\"# USB rejected: invalid/oversized line\");continue;}\n    if(result!=UsbCommandLine::LINE)continue;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1644,
+      "code": "# USB rejected: use NAME,arg or NAME arg; one argument only",
+      "kind": "TRANSPORT/UI",
+      "context": "    ConsoleCommand parsed;\n    if(!parseConsoleCommand(input.text,parsed)){Serial.println(\"# USB rejected: use NAME,arg or NAME arg; one argument only\");continue;}\n#if defined(ARDUINO_ARCH_ESP32)"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1662,
+      "code": "# ERASEFLASH REJECT: ",
+      "kind": "TRANSPORT/UI",
+      "context": "        Serial.println(\"# ERASEFLASH PENDING: deleting ALL8MiB; keep power connected; one attempt; reboot after full verification\");\n      }else{Serial.print(\"# ERASEFLASH REJECT: \");Serial.println(bootFlashErase.reason);}\n      continue; // plain direct USB only; never forward this operation over LoRa"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1869,
+      "code": "# HANDLIFT PWM FAILED; NO RETRY",
+      "kind": "TRANSPORT/UI",
+      "context": "    if(parachute.testSent)Serial.printf(\"# HANDLIFT PWM SENT; GPIO25; US=%u; FEEDBACK=NONE\\n\",unsigned(PARACHUTE_RELEASE_US));\n    else Serial.println(\"# HANDLIFT PWM FAILED; NO RETRY\");\n  }"
+    },
+    {
+      "file": "workswithoutcmd copy.html",
+      "line": 456,
+      "code": "Receiver command blocked: connect serial, stop simulation, wait for pending command.",
+      "kind": "TRANSPORT/UI",
+      "context": "  if(!cameraSerialReady || !serialPort || !serialPort.writable || simActive || cameraPending){\n    logCmd('Receiver command blocked: connect serial, stop simulation, wait for pending command.','err');return false;\n  }"
+    },
+    {
+      "file": "workswithoutcmd copy.html",
+      "line": 467,
+      "code": "Invalid command envelope/team/key/checksum; nothing sent.",
+      "kind": "TRANSPORT/UI",
+      "context": "       Number(m[3])!==CAMERA_CONFIG.KEY || Number(m[4])>0xFFFFFFFF){\n      logCmd('Invalid command envelope/team/key/checksum; nothing sent.','err');return false;\n    }"
+    },
+    {
+      "file": "workswithoutcmd copy.html",
+      "line": 521,
+      "code": "FAILED at ground bridge: ",
+      "kind": "TRANSPORT/UI",
+      "context": "    if(pending.name==='TELEM')applyTelemetryState(null);\n    finishDelivery(pending,'FAILED at ground bridge: '+raw+'. Physical execution unconfirmed.');\n    updateCameraControls();"
+    },
+    {
+      "file": "workswithoutcmd copy.html",
+      "line": 521,
+      "code": ". Physical execution unconfirmed.",
+      "kind": "TRANSPORT/UI",
+      "context": "    if(pending.name==='TELEM')applyTelemetryState(null);\n    finishDelivery(pending,'FAILED at ground bridge: '+raw+'. Physical execution unconfirmed.');\n    updateCameraControls();"
+    },
+    {
+      "file": "workswithoutcmd copy.html",
+      "line": 534,
+      "code": "FAILED: connection lost; execution unknown. No retry sent.",
+      "kind": "TRANSPORT/UI",
+      "context": "    clearTimeout(pending.timer); cameraPending = null;\n    finishDelivery(pending, 'FAILED: connection lost; execution unknown. No retry sent.');\n  }"
+    },
+    {
+      "file": "workswithoutcmd copy.html",
+      "line": 542,
+      "code": "Rocket-only command blocked for CanSat; nothing sent.",
+      "kind": "TRANSPORT/UI",
+      "context": "     (name==='STATUS' && ['CAMERA','SERVO','DESCENT'].includes(arg)))){\n    logCmd('Rocket-only command blocked for CanSat; nothing sent.','err');return false;\n  }"
+    },
+    {
+      "file": "workswithoutcmd copy.html",
+      "line": 577,
+      "code": "FAILED: serial write; execution unknown. No retry sent.",
+      "kind": "TRANSPORT/UI",
+      "context": "    if(name==='TELEM')applyTelemetryState(null);\n    finishDelivery(pending, 'FAILED: serial write; execution unknown. No retry sent.');\n  }"
+    },
+    {
+      "file": "workswithoutcmd copy.html",
+      "line": 597,
+      "code": "Invalid ACK ignored",
+      "kind": "TRANSPORT/UI",
+      "context": "      match[2] !== VEHICLE.ADDRESS || Number(match[3]) > 0xFFFFFFFF) {\n    logCmd('Invalid ACK ignored', 'err'); return true;\n  }"
+    },
+    {
+      "file": "inspacelora/lora_rx/lora_rx.ino",
+      "line": 97,
+      "code": "# RADIO invalid receiver argument: MAIN BACKUP STATUS",
+      "kind": "TRANSPORT/UI",
+      "context": "  RadioChannel channel=radioChannel(arg);\n  if(channel==RadioChannel::INVALID){Serial.println(\"# RADIO invalid receiver argument: MAIN BACKUP STATUS\");return;}\n  awaitSwitchAck=false;retuneReceiver(channel); // manual local recovery; no RF command"
+    },
+    {
+      "file": "inspacelora/lora_rx/lora_rx.ino",
+      "line": 112,
+      "code": "# RX rearm failed: ",
+      "kind": "TRANSPORT/UI",
+      "context": "    int16_t rc=radio.startReceive();\n    if(rc!=RADIOLIB_ERR_NONE){Serial.print(\"# RX rearm failed: \");Serial.println(rc);}\n    return;"
+    },
+    {
+      "file": "inspacelora/lora_rx/lora_rx.ino",
+      "line": 120,
+      "code": "# UPLINK partial line timed out",
+      "kind": "TRANSPORT/UI",
+      "context": "    commandUsed = 0; commandDropping = true; // discard through next LF\n    Serial.println(\"# UPLINK partial line timed out\");\n  }"
+    },
+    {
+      "file": "inspacelora/lora_rx/lora_rx.ino",
+      "line": 136,
+      "code": "# UPLINK invalid or oversized line",
+      "kind": "TRANSPORT/UI",
+      "context": "        commandDueMs=now+50;\n      } else if (commandUsed || commandDropping) Serial.println(\"# UPLINK invalid or oversized line\");\n      commandUsed = 0; commandDropping = false;"
+    },
+    {
+      "file": "inspacelora/lora_rx/lora_rx.ino",
+      "line": 167,
+      "code": "# RX rearm failed: ",
+      "kind": "TRANSPORT/UI",
+      "context": "  state = radio.startReceive();\n  if (state != RADIOLIB_ERR_NONE) { Serial.print(\"# RX rearm failed: \"); Serial.println(state); }\n}"
+    },
+    {
+      "file": "inspacelora/lora_rx/lora_rx.ino",
+      "line": 222,
+      "code": "# Radio init failed, code: ",
+      "kind": "TRANSPORT/UI",
+      "context": "  if (state != RADIOLIB_ERR_NONE) {\n    Serial.print(\"# Radio init failed, code: \");\n    Serial.println(state);"
+    },
+    {
+      "file": "inspacelora/lora_rx/lora_rx.ino",
+      "line": 234,
+      "code": "# startReceive failed, code: ",
+      "kind": "TRANSPORT/UI",
+      "context": "  if (state != RADIOLIB_ERR_NONE) {\n    Serial.print(\"# startReceive failed, code: \");\n    Serial.println(state);"
+    },
+    {
+      "file": "inspacelora/lora_rx/lora_rx.ino",
+      "line": 307,
+      "code": "Read failed, code: ",
+      "kind": "TRANSPORT/UI",
+      "context": "#if !CSV_ONLY\n    Serial.print(\"Read failed, code: \");\n    Serial.println(state);"
+    },
+    {
+      "file": "finalfsw/ServoControl.h",
+      "line": 190,
+      "code": "PWM%u_UNCONFIGURED",
+      "kind": "REJECT",
+      "context": "    }\n    if(request.result==ServoRequest::NOT_CONFIGURED){snprintf(info,capacity,\"PWM%u_UNCONFIGURED\",i+4);return \"REJECT\";}\n    if(request.result==ServoRequest::OUT_OF_RANGE){"
+    },
+    {
+      "file": "finalfsw/ServoControl.h",
+      "line": 192,
+      "code": "PWM%u_RANGE_%u_%u_US",
+      "kind": "ERR",
+      "context": "    if(request.result==ServoRequest::OUT_OF_RANGE){\n      snprintf(info,capacity,\"PWM%u_RANGE_%u_%u_US\",i+4,config[i].minUs,config[i].maxUs);return \"ERR\";\n    }"
+    },
+    {
+      "file": "cansatfswfinal/BootFlashErase.h",
+      "line": 18,
+      "code": "ALREADY_ATTEMPTED_REBOOT_REQUIRED",
+      "kind": "ERASE",
+      "context": "  bool request(Backend& io,uint32_t now,uint32_t bootMs,bool safe){\n    if(locked()){reason=\"ALREADY_ATTEMPTED_REBOOT_REQUIRED\";return false;}\n    if(uint32_t(now-bootMs)>=WINDOW_MS){reason=\"BOOT_WINDOW_CLOSED_REBOOT_REQUIRED\";return false;}"
+    },
+    {
+      "file": "cansatfswfinal/BootFlashErase.h",
+      "line": 19,
+      "code": "BOOT_WINDOW_CLOSED_REBOOT_REQUIRED",
+      "kind": "ERASE",
+      "context": "    if(locked()){reason=\"ALREADY_ATTEMPTED_REBOOT_REQUIRED\";return false;}\n    if(uint32_t(now-bootMs)>=WINDOW_MS){reason=\"BOOT_WINDOW_CLOSED_REBOOT_REQUIRED\";return false;}\n    if(!safe){reason=\"NEED_RECOVERED_UNARMED_PAD_OR_COMPLETED_MISSION_AND_IDLE_COMMANDS\";return false;}"
+    },
+    {
+      "file": "cansatfswfinal/BootFlashErase.h",
+      "line": 20,
+      "code": "NEED_RECOVERED_UNARMED_PAD_OR_COMPLETED_MISSION_AND_IDLE_COMMANDS",
+      "kind": "ERASE",
+      "context": "    if(uint32_t(now-bootMs)>=WINDOW_MS){reason=\"BOOT_WINDOW_CLOSED_REBOOT_REQUIRED\";return false;}\n    if(!safe){reason=\"NEED_RECOVERED_UNARMED_PAD_OR_COMPLETED_MISSION_AND_IDLE_COMMANDS\";return false;}\n    if(!io.startChipErase()){reason=\"CHIP_BUSY_PROTECTED_UNAVAILABLE_OR_WRONG_ID\";return false;}"
+    },
+    {
+      "file": "cansatfswfinal/BootFlashErase.h",
+      "line": 21,
+      "code": "CHIP_BUSY_PROTECTED_UNAVAILABLE_OR_WRONG_ID",
+      "kind": "ERASE",
+      "context": "    if(!safe){reason=\"NEED_RECOVERED_UNARMED_PAD_OR_COMPLETED_MISSION_AND_IDLE_COMMANDS\";return false;}\n    if(!io.startChipErase()){reason=\"CHIP_BUSY_PROTECTED_UNAVAILABLE_OR_WRONG_ID\";return false;}\n    phase=ERASING;startedMs=lastPollMs=now;reason=\"ERASING\";return true;"
+    },
+    {
+      "file": "cansatfswfinal/BootFlashErase.h",
+      "line": 27,
+      "code": "TIMEOUT_REBOOT_REQUIRED",
+      "kind": "ERASE",
+      "context": "    if(phase!=ERASING && phase!=VERIFYING)return;\n    if(uint32_t(now-startedMs)>=TIMEOUT_MS){phase=FAILED;reason=\"TIMEOUT_REBOOT_REQUIRED\";return;}\n    if(phase==ERASING){"
+    },
+    {
+      "file": "cansatfswfinal/BootFlashErase.h",
+      "line": 37,
+      "code": "VERIFY_READ_FAILED_REBOOT_REQUIRED",
+      "kind": "ERASE",
+      "context": "    if(!bytes || !io.read(verifiedBytes,buffer,bytes)){\n      phase=FAILED;reason=\"VERIFY_READ_FAILED_REBOOT_REQUIRED\";return;\n    }"
+    },
+    {
+      "file": "cansatfswfinal/BootFlashErase.h",
+      "line": 40,
+      "code": "NOT_FULLY_ERASED_REBOOT_REQUIRED",
+      "kind": "ERASE",
+      "context": "    for(uint32_t i=0;i<bytes;++i)if(buffer[i]!=0xFF){\n      phase=FAILED;reason=\"NOT_FULLY_ERASED_REBOOT_REQUIRED\";return;\n    }"
+    },
+    {
+      "file": "datafakecansat/datafakecansat.ino",
+      "line": 41,
+      "code": "# RX failed %d\\n",
+      "kind": "TRANSPORT/UI",
+      "context": "  int16_t rc=radio.startReceive();\n  if(rc!=RADIOLIB_ERR_NONE){radioOK=false;Serial.printf(\"# RX failed %d\\n\",rc);}\n}"
+    },
+    {
+      "file": "datafakecansat/datafakecansat.ino",
+      "line": 47,
+      "code": "# TX start failed %d\\n",
+      "kind": "TRANSPORT/UI",
+      "context": "  int16_t rc=radio.startTransmit((const uint8_t*)payload,n);\n  if(rc!=RADIOLIB_ERR_NONE){Serial.printf(\"# TX start failed %d\\n\",rc);listen();return false;}\n  txBusy=true;txStart=now;txLimit=radio.getTimeOnAir(n)/1000+100;"
+    },
+    {
+      "file": "datafakecansat/datafakecansat.ino",
+      "line": 118,
+      "code": "# NVS failed: numbered telemetry blocked",
+      "kind": "TRANSPORT/UI",
+      "context": "    if(counters.putUInt(\"high\",reserve)!=sizeof(uint32_t)){\n      storageOK=false;Serial.println(\"# NVS failed: numbered telemetry blocked\");return 0;\n    }"
+    },
+    {
+      "file": "datafakecansat/datafakecansat.ino",
+      "line": 169,
+      "code": "# Radio init failed %d; check lora_tx wiring/module\\n",
+      "kind": "TRANSPORT/UI",
+      "context": "  if(rc==RADIOLIB_ERR_NONE)rc=radio.setDio2AsRfSwitch(true);\n  if(rc!=RADIOLIB_ERR_NONE){Serial.printf(\"# Radio init failed %d; check lora_tx wiring/module\\n\",rc);return;}\n  radioOK=true;coexistence.seed(esp_random());profileStart=millis();listen();"
+    },
+    {
+      "file": "datafakecansat/datafakecansat.ino",
+      "line": 183,
+      "code": "# TX completion timeout (no delivery/execution confirmation)",
+      "kind": "TRANSPORT/UI",
+      "context": "    if(!done && uint32_t(now-txStart)<txLimit)return;\n    if(!done)Serial.println(\"# TX completion timeout (no delivery/execution confirmation)\");\n    radio.finishTransmit();txBusy=false;lastTxEnd=now;listen();return;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 650,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    if(!cameraAutomatic){\n      snprintf(cameraResultStatus,sizeof(cameraResultStatus),\"%s\",sent?\"DONE\":\"FAIL\");\n      snprintf(cameraResultInfo,sizeof(cameraResultInfo),\"%s\",sent?(cameraQueuedStart?\"CAM_REC_START_SENT\":\"CAM_REC_STOP_SENT\"):\"CAM_NOT_SENT_STORAGE_OR_UART\");"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 760,
+      "code": "RECOVERED_SEQ_OUTCOME_UNKNOWN",
+      "kind": "SOURCE CONDITION",
+      "context": "        snprintf(lastStatus,sizeof(lastStatus),\"REJECT\");\n        snprintf(lastInfo,sizeof(lastInfo),\"RECOVERED_SEQ_OUTCOME_UNKNOWN\");\n      }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 804,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "      journal.status=FlightJournal<FlashHardware>::FAULT; // ambiguous reset: freeze writes until boot recovery\n      snprintf(padResetStatus,sizeof(padResetStatus),\"FAIL\");\n      snprintf(padResetInfo,sizeof(padResetInfo),\"PAD_RESET_STORAGE_FAILED_REBOOT_TO_RESOLVE\");"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1073,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    calibrationPending=false;\n    if(calibrationFromCommand)calFinish(\"FAIL\",\"CAL_STORAGE_FAILED_OLD_PARAMETERS_RETAINED\");\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1081,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "     ((calMask&CAL_BARO) && (!baroSeen || uint32_t(now-baroReadMs)>100))){\n    calFinish(\"FAIL\",\"SENSOR_STALE_OR_UNRELIABLE\");return;\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1084,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  if((state!=ST_PAD) || mission.launched || !calibrationStationary(now)){\n    calFinish(\"FAIL\",\"MOVED_OR_MISSION_ACTIVE\");return;\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1090,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    calP+=pressurePa;++calPN;\n    if(fabsf(pressureToAltitude(calPressureMin,calPressureMax))>0.75f){calFinish(\"FAIL\",\"PRESSURE_UNSTABLE\");return;}\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1102,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  // Validate ALL requested sample sets before changing any active parameter.\n  if((calMask&CAL_BARO) && calPN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_BARO\");return;}\n  if((calMask&CAL_GYRO) && calGN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_GYRO\");return;}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1103,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  if((calMask&CAL_BARO) && calPN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_BARO\");return;}\n  if((calMask&CAL_GYRO) && calGN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_GYRO\");return;}\n  if((calMask&CAL_ACCEL) && calAN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_ACCEL\");return;}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1104,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  if((calMask&CAL_GYRO) && calGN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_GYRO\");return;}\n  if((calMask&CAL_ACCEL) && calAN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_ACCEL\");return;}\n  FlightCalibration value=calibration;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1109,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  if(calMask&CAL_ACCEL)value.verticalBias=calVertical/calAN;\n  if(!beginCalibrationWrite(value,true,now))calFinish(\"FAIL\",\"INVALID_CALIBRATION_OR_STORAGE_BUSY\");\n}"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1273,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "        autoStopStatus=priorAuto;\n        snprintf(info,infoLen,\"CAM_STORAGE_FAILED\");return \"FAIL\";\n      }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1281,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "      if (!start) autoStopStatus = AUTO_FAILED;\n      snprintf(info, infoLen, \"CAM_UART_FAILED_OR_DISABLED\"); return \"FAIL\";\n    }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1294,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    logEvent(LOG_CAM_INTENT,seq);\n    if (!camPowerButton()) { snprintf(info, infoLen, \"CAM_UART_FAILED_OR_DISABLED\"); return \"FAIL\"; }\n    logEvent(LOG_CAM_RESULT,seq);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1345,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    rtcTrusted=rtcValid;rtcLastUnix=checked;rtcChangeMs=now;\n    if(!rtcValid){snprintf(info,infoLen,\"RTC_VERIFY_FAILED\");return \"FAIL\";}\n    logEvent(LOG_CLOCK);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1372,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    padResetToken=persistCheckpoint(r);\n    if(!padResetToken){snprintf(info,infoLen,\"PAD_RESET_NOT_QUEUED\");return \"FAIL\";}\n    mission.armed=false; // immediately inhibit launch while the new PAD record commits"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1400,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    armToken=logEvent(LOG_ARM,seq);\n    if(!armToken){mission.armed=false;snprintf(info,infoLen,\"ARM_NOT_PERSISTED\");return \"FAIL\";}\n    snprintf(info, infoLen, \"MISSION_INITIALIZING\"); return \"OK\";"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1414,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    counterResetToken=persistCheckpoint(r);\n    if(!counterResetToken){snprintf(info,infoLen,\"COUNTER_RESET_NOT_QUEUED\");return \"FAIL\";}\n    counterResetSequence=seq;counterResetFromUsb=commandFromUsb;counterResetQueuedMs=now;"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1429,
+      "code": "COUNTER_STORAGE_FAILED",
+      "kind": "SOURCE CONDITION",
+      "context": "    migrationToken=persistCheckpoint(r);migrationFloor=floor;\n    snprintf(info,infoLen,\"%s\",migrationToken?\"COUNTER_BASELINE_PERSISTING\":\"COUNTER_STORAGE_FAILED\");\n    return migrationToken?\"OK\":\"FAIL\";"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1430,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    snprintf(info,infoLen,\"%s\",migrationToken?\"COUNTER_BASELINE_PERSISTING\":\"COUNTER_STORAGE_FAILED\");\n    return migrationToken?\"OK\":\"FAIL\";\n  }"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1583,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  else snprintf(info,sizeof(info),\"PWM%u_CMD_US=%u;FEEDBACK=NONE\",servoRadio.channel+4,servoRadio.pulseUs);\n  const char* result=servoRadio.ackFailed?\"FAIL\":\"DONE\";\n  queueAck(servoRadio.sequence,result,info,false);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1646,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  else snprintf(info,sizeof(info),\"RADIO_SWITCH_FAILED;MHZ=%.2f;RC=%d;LINK=UNKNOWN\",radioChannelMHz(radioSwitch.current),rc);\n  const char* status=ok?\"DONE\":\"FAIL\";\n  queueAck(sequence,status,info,usb);"
+    },
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "line": 1746,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "      journal.status=FlightJournal<FlashHardware>::FAULT; // freeze ambiguous writes until recovery\n      snprintf(counterResetStatus,sizeof(counterResetStatus),\"FAIL\");\n      snprintf(counterResetInfo,sizeof(counterResetInfo),\"COUNTER_RESET_STORAGE_FAILED_REBOOT\");"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 498,
+      "code": "NOT_FOUND",
+      "kind": "SOURCE CONDITION",
+      "context": "    rtcOK=rtc.begin(&Wire);\n    if(!rtcOK){rtcReadStatus=\"NOT_FOUND\";return;}\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 675,
+      "code": "RECOVERED_SEQ_OUTCOME_UNKNOWN",
+      "kind": "SOURCE CONDITION",
+      "context": "        snprintf(lastStatus,sizeof(lastStatus),\"REJECT\");\n        snprintf(lastInfo,sizeof(lastInfo),\"RECOVERED_SEQ_OUTCOME_UNKNOWN\");\n      }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 721,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "      journal.status=FlightJournal<FlashHardware>::FAULT; // ambiguous reset: freeze writes until boot recovery\n      snprintf(padResetStatus,sizeof(padResetStatus),\"FAIL\");\n      snprintf(padResetInfo,sizeof(padResetInfo),\"PAD_RESET_STORAGE_FAILED_REBOOT_TO_RESOLVE\");"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 857,
+      "code": "NOT_FOUND",
+      "kind": "SOURCE CONDITION",
+      "context": "  if (!rtc.begin(&Wire)) {\n    rtcReadStatus=\"NOT_FOUND\";\n    Serial.println(\"# DS3231 RTC not found on configured RTC I2C bus; time remains untrusted\");"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 989,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    calibrationPending=false;\n    if(calibrationFromCommand)calFinish(\"FAIL\",\"CAL_STORAGE_FAILED_OLD_PARAMETERS_RETAINED\");\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 997,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "     ((calMask&CAL_BARO) && (!baroSeen || uint32_t(now-baroReadMs)>100))){\n    calFinish(\"FAIL\",\"SENSOR_STALE_OR_UNRELIABLE\");return;\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1000,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  if((state!=ST_PAD) || mission.launched || !calibrationStationary(now)){\n    calFinish(\"FAIL\",\"MOVED_OR_MISSION_ACTIVE\");return;\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1006,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    calP+=pressurePa;++calPN;\n    if(fabsf(pressureToAltitude(calPressureMin,calPressureMax))>0.75f){calFinish(\"FAIL\",\"PRESSURE_UNSTABLE\");return;}\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1018,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  // Validate ALL requested sample sets before changing any active parameter.\n  if((calMask&CAL_BARO) && calPN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_BARO\");return;}\n  if((calMask&CAL_GYRO) && calGN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_GYRO\");return;}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1019,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  if((calMask&CAL_BARO) && calPN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_BARO\");return;}\n  if((calMask&CAL_GYRO) && calGN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_GYRO\");return;}\n  if((calMask&CAL_ACCEL) && calAN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_ACCEL\");return;}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1020,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  if((calMask&CAL_GYRO) && calGN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_GYRO\");return;}\n  if((calMask&CAL_ACCEL) && calAN<100){calFinish(\"FAIL\",\"INSUFFICIENT_FRESH_ACCEL\");return;}\n  FlightCalibration value=calibration;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1025,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  if(calMask&CAL_ACCEL)value.verticalBias=calVertical/calAN;\n  if(!beginCalibrationWrite(value,true,now))calFinish(\"FAIL\",\"INVALID_CALIBRATION_OR_STORAGE_BUSY\");\n}"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1037,
+      "code": "PWM25_OFF;NO_POSITION_FEEDBACK",
+      "kind": "SOURCE CONDITION",
+      "context": "      bool ok=parachuteOutput.off();\n      snprintf(info,infoLen,\"%s\",ok?\"PWM25_OFF;NO_POSITION_FEEDBACK\":\"PWM25_OFF_FAILED;OUTPUT_UNKNOWN\");\n      return ok?\"OK\":\"FAIL\";"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1037,
+      "code": "PWM25_OFF_FAILED;OUTPUT_UNKNOWN",
+      "kind": "SOURCE CONDITION",
+      "context": "      bool ok=parachuteOutput.off();\n      snprintf(info,infoLen,\"%s\",ok?\"PWM25_OFF;NO_POSITION_FEEDBACK\":\"PWM25_OFF_FAILED;OUTPUT_UNKNOWN\");\n      return ok?\"OK\":\"FAIL\";"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1038,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "      snprintf(info,infoLen,\"%s\",ok?\"PWM25_OFF;NO_POSITION_FEEDBACK\":\"PWM25_OFF_FAILED;OUTPUT_UNKNOWN\");\n      return ok?\"OK\":\"FAIL\";\n    }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1046,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    parachute.cancelTest();\n    if(!parachuteOutput.writeUs(uint16_t(us))){snprintf(info,infoLen,\"PWM25_OUTPUT_FAILED;FEEDBACK=NONE\");return \"FAIL\";}\n    // Best effort diagnostics only: direct PWM never depends on a flash commit."
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1244,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    rtcTrusted=rtcValid;rtcLastUnix=checked;rtcChangeMs=now;\n    if(!rtcValid){snprintf(info,infoLen,\"RTC_VERIFY_FAILED\");return \"FAIL\";}\n    logEvent(LOG_CLOCK);"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1286,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    padResetToken=persistCheckpoint(r);\n    if(!padResetToken){snprintf(info,infoLen,\"PAD_RESET_NOT_QUEUED\");return \"FAIL\";}\n    mission.armed=false; // immediately inhibit launch while the new PAD record commits"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1313,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    armToken=logEvent(LOG_ARM,seq);\n    if(!armToken){mission.armed=false;snprintf(info,infoLen,\"ARM_NOT_PERSISTED\");return \"FAIL\";}\n    snprintf(info, infoLen, \"MISSION_INITIALIZING\"); return \"OK\";"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1327,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    counterResetToken=persistCheckpoint(r);\n    if(!counterResetToken){snprintf(info,infoLen,\"COUNTER_RESET_NOT_QUEUED\");return \"FAIL\";}\n    counterResetSequence=seq;counterResetFromUsb=commandFromUsb;counterResetQueuedMs=now;"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1342,
+      "code": "COUNTER_STORAGE_FAILED",
+      "kind": "SOURCE CONDITION",
+      "context": "    migrationToken=persistCheckpoint(r);migrationFloor=floor;\n    snprintf(info,infoLen,\"%s\",migrationToken?\"COUNTER_BASELINE_PERSISTING\":\"COUNTER_STORAGE_FAILED\");\n    return migrationToken?\"OK\":\"FAIL\";"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1343,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "    snprintf(info,infoLen,\"%s\",migrationToken?\"COUNTER_BASELINE_PERSISTING\":\"COUNTER_STORAGE_FAILED\");\n    return migrationToken?\"OK\":\"FAIL\";\n  }"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1528,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "  else snprintf(info,sizeof(info),\"RADIO_SWITCH_FAILED;MHZ=%.2f;RC=%d;LINK=UNKNOWN\",radioChannelMHz(radioSwitch.current),rc);\n  const char* status=ok?\"DONE\":\"FAIL\";\n  queueAck(sequence,status,info,usb);"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1631,
+      "code": "FAIL",
+      "kind": "SOURCE CONDITION",
+      "context": "      journal.status=FlightJournal<FlashHardware>::FAULT; // freeze ambiguous writes until recovery\n      snprintf(counterResetStatus,sizeof(counterResetStatus),\"FAIL\");\n      snprintf(counterResetInfo,sizeof(counterResetInfo),\"COUNTER_RESET_STORAGE_FAILED_REBOOT\");"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "line": 1734,
+      "code": "FAILED",
+      "kind": "SOURCE CONDITION",
+      "context": "  Serial.printf(\"# I2C controller=%s; idle SDA=%d SCL=%d (LOW suggests held bus/wiring)\\n\",\n    i2cStarted?\"OK\":\"FAILED\",digitalRead(CanSatPins::SDA_PIN),digitalRead(CanSatPins::SCL_PIN));\n#else"
+    },
+    {
+      "file": "finalfsw/ServoControl.h",
+      "line": 188,
+      "code": "ARG_SPIN_REVERSE_STOP_SAFE_TEST90_OR_ANGLE_OR_US",
+      "kind": "SOURCE CONDITION",
+      "context": "    if(request.result==ServoRequest::BAD_ARGUMENT){\n      snprintf(info,capacity,\"%s\",config[i].continuous?\"ARG_SPIN_REVERSE_STOP_SAFE_TEST90_OR_ANGLE_OR_US\":\"ARG_SAFE_TEST90_OR_ANGLE_0_270_OR_US_500_2500\");return \"ERR\";\n    }"
+    },
+    {
+      "file": "finalfsw/ServoControl.h",
+      "line": 188,
+      "code": "ARG_SAFE_TEST90_OR_ANGLE_0_270_OR_US_500_2500",
+      "kind": "SOURCE CONDITION",
+      "context": "    if(request.result==ServoRequest::BAD_ARGUMENT){\n      snprintf(info,capacity,\"%s\",config[i].continuous?\"ARG_SPIN_REVERSE_STOP_SAFE_TEST90_OR_ANGLE_OR_US\":\"ARG_SAFE_TEST90_OR_ANGLE_0_270_OR_US_500_2500\");return \"ERR\";\n    }"
+    },
+    {
+      "file": "datafakecansat/datafakecansat.ino",
+      "line": 69,
+      "code": "DELAYED_DUPLICATE",
+      "kind": "SOURCE CONDITION",
+      "context": "  }\n  if(commandHistory.contains(seq)){makeAck(seq,\"REJECT\",\"DELAYED_DUPLICATE\",now);return;}\n  commandHistory.add(seq);"
+    },
+    {
+      "file": "datafakecansat/datafakecansat.ino",
+      "line": 76,
+      "code": "ARG",
+      "kind": "SOURCE CONDITION",
+      "context": "  } else if(!strcmp(name,\"REBOOT\")){\n    if(*arg){result=\"ERR\";snprintf(info,sizeof(info),\"ARG\");}\n    else{"
+    },
+    {
+      "file": "datafakecansat/datafakecansat.ino",
+      "line": 82,
+      "code": "USE_RESETPAD_CONFIRM",
+      "kind": "SOURCE CONDITION",
+      "context": "  } else if(!strcmp(name,\"RESETPAD\")){\n    if(strcmp(arg,\"CONFIRM\")){result=\"ERR\";snprintf(info,sizeof(info),\"USE_RESETPAD_CONFIRM\");}\n    else{profileHeld=true;profileStart=now;result=\"DONE\";snprintf(info,sizeof(info),\"ST=0;PAD_RESET_DONE;UNARMED;MISSION=1;FAKE=1\");}"
+    },
+    {
+      "file": "datafakecansat/datafakecansat.ino",
+      "line": 87,
+      "code": "ARG",
+      "kind": "SOURCE CONDITION",
+      "context": "    else if(!strcmp(arg,\"1\")){telemetryOn=true;snprintf(info,sizeof(info),\"TELEM_ON\");}\n    else{result=\"ERR\";snprintf(info,sizeof(info),\"ARG\");}\n  } else if(!strcmp(name,\"RATE\")){"
+    },
+    {
+      "file": "datafakecansat/datafakecansat.ino",
+      "line": 90,
+      "code": "RANGE_400_10000",
+      "kind": "SOURCE CONDITION",
+      "context": "    uint32_t rate=decimalU32(arg)?strtoul(arg,nullptr,10):0;\n    if(rate<400 || rate>10000){result=\"ERR\";snprintf(info,sizeof(info),\"RANGE_400_10000\");}\n    else{periodMs=rate;snprintf(info,sizeof(info),\"RATE=%lu\",(unsigned long)rate);}"
+    }
+  ],
+  "note": "Negative literal/pattern index plus explicit silent paths. Dynamic placeholders remain; see cited source condition. Hardware cause is not inferred."
+}

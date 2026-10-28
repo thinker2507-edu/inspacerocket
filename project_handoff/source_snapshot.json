@@ -1,0 +1,53 @@
+{
+  "generated": "2026-10-29",
+  "files": [
+    {
+      "file": "finalfsw/finalfsw.ino",
+      "sha256": "982de8b1d6101433a6eb5aa15f0baff1d2684b1a1a6e49c9c6a0eac65a8cab1e"
+    },
+    {
+      "file": "cansatfswfinal/cansatfswfinal.ino",
+      "sha256": "972c8b43b1fb745751fbfe7b4c043406363c546d651ff62fb07b1c176d267d4a"
+    },
+    {
+      "file": "workswithoutcmd copy.html",
+      "sha256": "34a28d929be2ba144977a7d49da0037ae7f803ff9caf3d97894f75d47f0b36e4"
+    },
+    {
+      "file": "inspacelora/lora_rx/lora_rx.ino",
+      "sha256": "425cb121d293b70ba164f8729964c2b0edf3bd3e480fda6559b71d9955b380b9"
+    },
+    {
+      "file": "finalfsw/CommandValidation.h",
+      "sha256": "53fc470a9560588749d837401df367f56eda0d0c41c420835826e994334d028f"
+    },
+    {
+      "file": "finalfsw/ConsoleCommand.h",
+      "sha256": "43e3c01b7f5992fd36b497fd59cc8e3ff1a474107a8fe1b2eba41d2f1af9c312"
+    },
+    {
+      "file": "finalfsw/ServoControl.h",
+      "sha256": "31b49c5c339feef186438f9813e492a697e78b3951499fedbd6990c1b7698a28"
+    },
+    {
+      "file": "finalfsw/RunCamControl.h",
+      "sha256": "3134d1713bcf4a3a2370f08e49a748c5c88d0e1501fa081eb2f11be7fafd5104"
+    },
+    {
+      "file": "cansatfswfinal/BootFlashErase.h",
+      "sha256": "08931f20c88707f3916c8fee6a97a48a68400ad11d0955e41f776ecdf2e7c050"
+    },
+    {
+      "file": "cansatfswfinal/Esp32Flash.h",
+      "sha256": "eb9f3e7d85b1d0c71f4a3baa8aabcc2d357c531926a2aebedfd37f3da09ff685"
+    },
+    {
+      "file": "cansatfswfinal/ParachuteControl.h",
+      "sha256": "4fbc57948371edc8fbd44cc9d43918682b6fce41d3136ed299c239262e0f785a"
+    },
+    {
+      "file": "datafakecansat/datafakecansat.ino",
+      "sha256": "914224ae908728fbacf4c9995656fab749d93929347913b5c38819f78c3fa771"
+    }
+  ]
+}
