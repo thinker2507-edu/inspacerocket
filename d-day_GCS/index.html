@@ -680,6 +680,10 @@ function handleCameraAck(raw) {
     finishDelivery(pending,'Radio switch accepted on old channel; waiting for DONE on the requested frequency. Link unconfirmed.',true);
     return true;
   }
+  if(pending.name==='EJECT' && match[4]==='OK' && match[5]==='EJECT_ACCEPTED'){
+    finishDelivery(pending,'EJECT accepted; waiting for selected-vehicle current+90deg output (capped270). Physical position UNKNOWN.',true);
+    return true;
+  }
   if((['PWM2','PWM3','PWM4','PWM5'].includes(pending.name)) && match[4]==='OK' &&
      match[5].startsWith(pending.name+'_ACCEPTED_US=')){
     finishDelivery(pending,'Wireless servo command accepted; waiting for commanded-output DONE/FAIL. Physical position UNKNOWN.',true);
@@ -731,7 +735,7 @@ const CSV_HEADER = [
   'gnss_time','lat','lon','gpsalt','sats',
   'accel_x','accel_y','accel_z',
   'gyro_x','gyro_y','gyro_z',
-  'state','aero','counter_epoch','cmd','source','alt_hb','alt_valid','alt_cm','alt_latched'
+  'state','aero','counter_epoch','cmd','source','alt_hb','alt_valid','alt_cm','alt_latched','alt_known'
 ];
 
 const PHASES    = ['PAD','POWERED_ASCENT','COAST','APOGEE','PARACHUTE_DESCENT','LANDED'];
@@ -1103,16 +1107,18 @@ function parsePacket(raw) {
       rejectVehiclePacket('invalid counter epoch');return;
     }
     const counterEpoch=epochTokens.length?Number(epochTokens[0].slice(2)):0;
-    let altStatus={alt_hb:null,alt_valid:null,alt_cm:null,alt_latched:null};
+    let altStatus={alt_hb:null,alt_valid:null,alt_cm:null,alt_latched:null,alt_known:null};
     if(src===1 && optParts.some(v=>/^(AH|AV|AA|AL)=/.test(v))){
       const read=key=>{const tokens=optParts.filter(v=>v.startsWith(key+'='));return tokens.length===1?tokens[0].slice(key.length+1):null;};
       const ah=read('AH'),av=read('AV'),aa=read('AA'),al=read('AL');
+      const aks=optParts.filter(v=>v.startsWith('AK='));
+      if(aks.length>1 || (aks.length && !/^AK=[01]$/.test(aks[0])) || (aks[0]==='AK=1' && ah!=='1')){rejectVehiclePacket('invalid angle readiness');return;}
       if(!/^[01]$/.test(ah??'') || !/^[01]$/.test(av??'') || !/^[01]$/.test(al??'') ||
          !/^(0|-?[1-9]\d*)$/.test(aa??'') || !Number.isSafeInteger(Number(aa)) ||
          (av==='1'?(ah!=='1' || Math.abs(Number(aa))>2000000):aa!=='-2147483648')){
         rejectVehiclePacket('invalid D-day altimeter status');return;
       }
-      altStatus={alt_hb:Number(ah),alt_valid:Number(av),alt_cm:Number(aa),alt_latched:Number(al)};
+      altStatus={alt_hb:Number(ah),alt_valid:Number(av),alt_cm:Number(aa),alt_latched:Number(al),alt_known:aks.length?Number(aks[0].slice(3)):null};
     }
     const isCansat = (src === 2);
     const aeroVal  = isCansat ? parseFloat(optParts[1]) : NaN;
@@ -1172,14 +1178,14 @@ function parsePacket(raw) {
 ══════════════════════════════════════════════════════ */
 function push(arr, v) { arr.push(v); if (arr.length > N) arr.shift(); }
 function ddayCsvStatus(parts,sv){
-  const fields=['alt_hb','alt_valid','alt_cm','alt_latched'];
+  const fields=['alt_hb','alt_valid','alt_cm','alt_latched','alt_known'];
   const values=fields.map(k=>sv(parts,k,''));
-  const unknown={alt_hb:null,alt_valid:null,alt_cm:null,alt_latched:null};
+  const unknown={alt_hb:null,alt_valid:null,alt_cm:null,alt_latched:null,alt_known:null};
   if(!/^[01]$/.test(values[0]) || !/^[01]$/.test(values[1]) || !/^[01]$/.test(values[3]) ||
      !/^(0|-?[1-9]\d*)$/.test(values[2]))return unknown;
   const [hb,valid,cm,latch]=values.map(Number);
   if(!Number.isSafeInteger(cm) || (valid?(hb!==1 || Math.abs(cm)>2000000):cm!==-2147483648))return unknown;
-  return {alt_hb:hb,alt_valid:valid,alt_cm:cm,alt_latched:latch};
+  return {alt_hb:hb,alt_valid:valid,alt_cm:cm,alt_latched:latch,alt_known:/^[01]$/.test(values[4])?Number(values[4]):null};
 }
 function ingestCansat(d) {
   const t = buf.ct.length ? buf.ct[buf.ct.length-1]+1 : 0;
@@ -1213,7 +1219,8 @@ function updateAltimeterInfo(d,cotsAltitude) {
   const heartbeat=d.alt_hb===1?'FRESH':d.alt_hb===0?'MISSING':'UNKNOWN';
   const height=Number.isFinite(cotsAltitude)?cotsAltitude.toFixed(2)+' m above pad':'INVALID / STALE';
   const latch=d.alt_latched===1?'YES':d.alt_latched===0?'NO':'UNKNOWN';
-  document.getElementById('altimeter-status').textContent=`Altimeter UART: ${heartbeat} | Altitude: ${height} | Release latch: ${latch}`;
+  const angle=d.alt_known===1?'KNOWN COMMAND':d.alt_known===0?'UNKNOWN':'UNKNOWN';
+  document.getElementById('altimeter-status').textContent=`Altimeter UART: ${heartbeat} | Altitude: ${height} | Release latch: ${latch}; Angle: ${angle}`;
 }
 function ingestRocket(d) {
   lastRocketPacketMs=Date.now();lastRocketAltitude=d.alt;
@@ -1269,7 +1276,7 @@ function ingestData(d) {
     d.ax, d.ay, d.az,
     d.gx, d.gy, d.gz,
     d.state || currentPhase, (d.aero == null ? '' : d.aero), d.counter_epoch ?? 0, d.cmd || '', d.source || 'rocket',
-    d.alt_hb??'',d.alt_valid??'',d.alt_cm??'',d.alt_latched??''
+    d.alt_hb??'',d.alt_valid??'',d.alt_cm??'',d.alt_latched??'',d.alt_known??''
   ];
   csvRows.push(row);
   csvRecording = true;
